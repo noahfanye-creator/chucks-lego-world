@@ -1,0 +1,17 @@
+
+{
+  "name": "Chuck's Lego World",
+  "short_name": "ChuckLego",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#e5e7eb",
+  "theme_color": "#C91A09",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/946/946321.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
