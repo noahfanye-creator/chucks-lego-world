@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Brick } from './components/Brick';
 import { Section, Subject, Task } from './types';
 import { getDailyInspiration } from './services/geminiService';
-import { PlaneGame } from './components/PlaneGame';
+import { StarAceGame } from './components/StarAceGame';
 
 const App: React.FC = () => {
   const [activeSection, setActiveSection] = useState<Section>('home');
@@ -116,23 +116,23 @@ const App: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-4xl mx-auto">
         <Brick color="white" className="overflow-hidden p-3 border-4 border-gray-100">
            <div className="bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300">
-             <img src="input_file_0.png" alt="Beihai Park" className="w-full h-64 object-cover" />
+             <img src="Family Time at Beihai Park.png" alt="Family Time at Beihai Park" className="w-full h-64 object-cover" />
            </div>
-           <p className="font-cartoon text-xl text-gray-800 mt-4 text-center italic">北海公园欢乐行 🏯</p>
+           <p className="font-cartoon text-xl text-gray-800 mt-4 text-center italic">北海公园家庭时光 🏯</p>
         </Brick>
 
         <Brick color="white" className="overflow-hidden p-3 border-4 border-gray-100">
            <div className="bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300">
-             <img src="input_file_1.png" alt="Jingshan School" className="w-full h-64 object-cover" />
+             <img src="At the School Gate.png" alt="At the School Gate" className="w-full h-64 object-cover" />
            </div>
-           <p className="font-cartoon text-xl text-gray-800 mt-4 text-center italic">景山学校新学期 🏫</p>
+           <p className="font-cartoon text-xl text-gray-800 mt-4 text-center italic">学校门口的美好时光 🏫</p>
         </Brick>
 
-        <Brick color="white" className="overflow-hidden p-3 border-4 border-gray-100 md:col-span-2">
+        <Brick color="white" className="overflow-hidden p-3 border-4 border-gray-100">
            <div className="bg-gray-200 rounded-lg overflow-hidden border-2 border-gray-300">
-             <img src="input_file_2.png" alt="Sports Time" className="w-full h-64 object-cover" />
+             <img src="Badminton Practice.png" alt="Badminton Practice" className="w-full h-64 object-cover" />
            </div>
-           <p className="font-cartoon text-xl text-gray-800 mt-4 text-center italic">全家运动总动员 🏸</p>
+           <p className="font-cartoon text-xl text-gray-800 mt-4 text-center italic">羽毛球练习时光 🏸</p>
         </Brick>
       </div>
 
@@ -239,7 +239,7 @@ const App: React.FC = () => {
                         <span className="font-cartoon text-xl text-yellow-900">最高得分</span>
                         <span className="font-cartoon text-3xl text-yellow-900">{highScore}</span>
                     </div>
-                    <PlaneGame onGameOver={handleGameOver} />
+                    <StarAceGame onGameOver={handleGameOver} />
                 </div>
 
                 <Brick color="green" className="mb-10">
