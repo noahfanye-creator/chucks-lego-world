@@ -38,6 +38,13 @@ jobs:
           GITHUB_REPOSITORY_NAME: ${{ github.event.repository.name == format('{0}.github.io', github.repository_owner) && '' || github.event.repository.name }}
         run: npm run build
 
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: ./dist
+          retention-days: 1
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
@@ -46,13 +53,67 @@ jobs:
         with:
           path: './dist'
 
-  deploy:
+  deploy-pages:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: ./dist
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-server:
+    # 部署到你的服务器 (154.17.3.182)
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ secrets.SSH_PRIVATE_KEY != '' && secrets.SERVER_HOST != '' }}
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: ./dist
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Ensure remote directory exists
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p ${{ secrets.SERVER_DIR }}"
+
+      - name: Deploy to server
+        run: |
+          scp -r ./dist/* ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_DIR }}/
+
+      - name: Reload Nginx
+        run: |
+          ssh ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl reload nginx || true"
+        continue-on-error: true
+
+      - name: Deployment success
+        run: |
+          echo "✅ 部署完成！"
+          echo "🌐 网站地址: https://${{ secrets.SERVER_DOMAIN || 'chuckfan.com' }}"
