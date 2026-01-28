@@ -1,8 +1,0 @@
-{
-  "name": "Chuck's Lego World",
-  "description": "A vibrant, interactive Lego-themed dashboard for Chuck to manage his learning, sports, entertainment, and daily plans.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone"
-  ]
-}

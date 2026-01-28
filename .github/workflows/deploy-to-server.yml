@@ -1,0 +1,47 @@
+name: Deploy to Server (chuckfan.com)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          ssh-keyscan -H 154.17.3.182 >> ~/.ssh/known_hosts
+
+      - name: Clear remote directory and create
+        run: |
+          ssh -o StrictHostKeyChecking=no root@154.17.3.182 "rm -rf /root/projects/chuck/* 2>/dev/null; mkdir -p /root/projects/chuck"
+
+      - name: Deploy static site to server
+        run: |
+          scp -o StrictHostKeyChecking=no ./index.html root@154.17.3.182:/root/projects/chuck/index.html
+
+      - name: Set correct permissions
+        run: |
+          ssh -o StrictHostKeyChecking=no root@154.17.3.182 "chmod -R 755 /root/projects/chuck"
+
+      - name: Reload Nginx (optional)
+        run: |
+          ssh -o StrictHostKeyChecking=no root@154.17.3.182 "sudo nginx -t && sudo systemctl reload nginx || true"
+
+      - name: Deployment success
+        run: |
+          echo "✅ 部署成功！细胞工厂大挑战已更新到 https://chuckfan.com"
