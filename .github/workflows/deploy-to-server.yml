@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:  # 允许手动触发
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,31 +17,49 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.9.0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Setup SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
 
       - name: Add server to known hosts
-        run: |
-          ssh-keyscan -H 154.17.3.182 >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H 154.17.3.182 >> ~/.ssh/known_hosts
 
       - name: Clear remote directory and create
         run: |
-          ssh -o StrictHostKeyChecking=no root@154.17.3.182 "rm -rf /root/projects/chuck/* 2>/dev/null; mkdir -p /root/projects/chuck"
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "rm -rf /root/projects/chuck/* 2>/dev/null; mkdir -p /root/projects/chuck"
 
-      - name: Deploy static site to server
+      - name: Deploy to server
         run: |
-          scp -o StrictHostKeyChecking=no ./index.html root@154.17.3.182:/root/projects/chuck/index.html
+          scp -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no -r ./dist/* \
+            root@154.17.3.182:/root/projects/chuck/
 
       - name: Set correct permissions
         run: |
-          ssh -o StrictHostKeyChecking=no root@154.17.3.182 "chmod -R 755 /root/projects/chuck"
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "chmod -R 755 /root/projects/chuck"
 
       - name: Reload Nginx (optional)
         run: |
-          ssh -o StrictHostKeyChecking=no root@154.17.3.182 "sudo nginx -t && sudo systemctl reload nginx || true"
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "sudo nginx -t && sudo systemctl reload nginx || true"
 
       - name: Deployment success
-        run: |
-          echo "✅ 部署成功！细胞工厂大挑战已更新到 https://chuckfan.com"
+        run: echo "✅ 部署成功！站点已更新到 https://chuckfan.com"

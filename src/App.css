@@ -1,0 +1,235 @@
+/* App 特定样式 */
+
+/* 确保3D变换正常工作 */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* 乐高积木悬停效果增强 */
+.lego-brick-red,
+.lego-brick-yellow,
+.lego-brick-blue,
+.lego-brick-green,
+.lego-brick-black,
+.lego-brick-white {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* 模块卡片悬停倾斜效果 */
+.module-card {
+  transition: transform 0.3s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-4px);
+}
+
+/* 游戏画布样式 */
+.game-canvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
+/* 动画关键帧 */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+}
+
+@keyframes shine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* 响应式调整 */
+@media (max-width: 640px) {
+  .title-3d {
+    font-size: 2.5rem !important;
+  }
+  
+  .lego-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d32f2f;
+  border-radius: 5px;
+  border: 2px solid #f5f5f5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #b71c1c;
+}
+
+/* 选中文字样式 */
+::selection {
+  background: rgba(251, 192, 45, 0.5);
+  color: #212121;
+}
+
+/* 焦点样式 */
+:focus-visible {
+  outline: 3px solid #fbc02d;
+  outline-offset: 2px;
+}
+
+/* 按钮点击效果 */
+button:active {
+  transform: scale(0.98);
+}
+
+/* 链接样式 */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* 图片样式 */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* 防止文本选择 */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* 乐高钉装饰 */
+.lego-stud {
+  position: absolute;
+  top: -12px;
+  width: 24px;
+  height: 16px;
+  border-radius: 50% 50% 0 0;
+  background: inherit;
+  box-shadow: inset 0 2px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* 光泽效果 */
+.shine-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: shine 4s infinite;
+  pointer-events: none;
+}
+
+/* 卡片内部发光 */
+.glow-inner {
+  box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.1);
+}
+
+/* 进度条动画 */
+.progress-bar {
+  transition: width 0.5s ease;
+}
+
+/* 任务完成动画 */
+.task-complete {
+  animation: taskComplete 0.3s ease;
+}
+
+@keyframes taskComplete {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* 爆炸粒子效果 */
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* 游戏相关样式 */
+.game-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
+/* 响应式字体大小 */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media (min-width: 1920px) {
+  html {
+    font-size: 18px;
+  }
+}

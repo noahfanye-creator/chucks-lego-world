@@ -1,0 +1,332 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 96%;
+    --foreground: 0 0% 13%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 13%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 13%;
+    --primary: 4 90% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 45 96% 58%;
+    --secondary-foreground: 0 0% 13%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 207 79% 46%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 80%;
+    --input: 0 0% 80%;
+    --ring: 4 90% 50%;
+    --radius: 0.75rem;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-lego-gray text-foreground font-nunito antialiased;
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(211, 47, 47, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(251, 192, 45, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(25, 118, 210, 0.03) 0%, transparent 40%);
+  }
+}
+
+@layer components {
+  /* 乐高积木基础样式 */
+  .lego-brick {
+    @apply relative rounded-lego transition-all duration-300;
+    transform-style: preserve-3d;
+  }
+  
+  .lego-brick-red {
+    @apply bg-lego-red text-white;
+    box-shadow: 
+      0 8px 0 0 #B71C1C,
+      0 15px 20px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-red:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 12px 0 0 #B71C1C,
+      0 20px 30px rgba(0,0,0,0.2),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-red:active {
+    @apply translate-y-1;
+    box-shadow: 
+      0 4px 0 0 #B71C1C,
+      0 8px 12px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-yellow {
+    @apply bg-lego-yellow text-lego-black;
+    box-shadow: 
+      0 8px 0 0 #F57F17,
+      0 15px 20px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.3),
+      inset 0 -2px 0 rgba(0,0,0,0.05);
+  }
+  
+  .lego-brick-yellow:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 12px 0 0 #F57F17,
+      0 20px 30px rgba(0,0,0,0.2),
+      inset 0 2px 0 rgba(255,255,255,0.3),
+      inset 0 -2px 0 rgba(0,0,0,0.05);
+  }
+  
+  .lego-brick-yellow:active {
+    @apply translate-y-1;
+    box-shadow: 
+      0 4px 0 0 #F57F17,
+      0 8px 12px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.3),
+      inset 0 -2px 0 rgba(0,0,0,0.05);
+  }
+  
+  .lego-brick-blue {
+    @apply bg-lego-blue text-white;
+    box-shadow: 
+      0 8px 0 0 #0D47A1,
+      0 15px 20px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-blue:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 12px 0 0 #0D47A1,
+      0 20px 30px rgba(0,0,0,0.2),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-blue:active {
+    @apply translate-y-1;
+    box-shadow: 
+      0 4px 0 0 #0D47A1,
+      0 8px 12px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-green {
+    @apply bg-lego-green text-white;
+    box-shadow: 
+      0 8px 0 0 #1B5E20,
+      0 15px 20px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-green:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 12px 0 0 #1B5E20,
+      0 20px 30px rgba(0,0,0,0.2),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-green:active {
+    @apply translate-y-1;
+    box-shadow: 
+      0 4px 0 0 #1B5E20,
+      0 8px 12px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,0.2),
+      inset 0 -2px 0 rgba(0,0,0,0.1);
+  }
+  
+  .lego-brick-black {
+    @apply bg-lego-black text-white;
+    box-shadow: 
+      0 8px 0 0 #000000,
+      0 15px 20px rgba(0,0,0,0.2),
+      inset 0 2px 0 rgba(255,255,255,0.1),
+      inset 0 -2px 0 rgba(0,0,0,0.3);
+  }
+  
+  .lego-brick-black:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 12px 0 0 #000000,
+      0 20px 30px rgba(0,0,0,0.25),
+      inset 0 2px 0 rgba(255,255,255,0.1),
+      inset 0 -2px 0 rgba(0,0,0,0.3);
+  }
+  
+  .lego-brick-black:active {
+    @apply translate-y-1;
+    box-shadow: 
+      0 4px 0 0 #000000,
+      0 8px 12px rgba(0,0,0,0.2),
+      inset 0 2px 0 rgba(255,255,255,0.1),
+      inset 0 -2px 0 rgba(0,0,0,0.3);
+  }
+  
+  .lego-brick-white {
+    @apply bg-white text-lego-black;
+    box-shadow: 
+      0 8px 0 0 #E0E0E0,
+      0 15px 20px rgba(0,0,0,0.1),
+      inset 0 2px 0 rgba(255,255,255,1),
+      inset 0 -2px 0 rgba(0,0,0,0.05);
+  }
+  
+  .lego-brick-white:hover {
+    @apply -translate-y-1;
+    box-shadow: 
+      0 12px 0 0 #E0E0E0,
+      0 20px 30px rgba(0,0,0,0.15),
+      inset 0 2px 0 rgba(255,255,255,1),
+      inset 0 -2px 0 rgba(0,0,0,0.05);
+  }
+  
+  .lego-brick-white:active {
+    @apply translate-y-1;
+    box-shadow: 
+      0 4px 0 0 #E0E0E0,
+      0 8px 12px rgba(0,0,0,0.1),
+      inset 0 2px 0 rgba(255,255,255,1),
+      inset 0 -2px 0 rgba(0,0,0,0.05);
+  }
+
+  /* 乐高钉效果 */
+  .lego-stud {
+    @apply absolute -top-3 w-6 h-4 rounded-t-full;
+    background: inherit;
+    box-shadow: inset 0 2px 2px rgba(255,255,255,0.3);
+  }
+  
+  /* 点阵背景 */
+  .dot-pattern {
+    background-image: radial-gradient(circle, #D32F2F 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+  }
+  
+  /* 标题文字效果 */
+  .title-3d {
+    text-shadow: 
+      0 1px 0 #B71C1C,
+      0 2px 0 #B71C1C,
+      0 3px 0 #B71C1C,
+      0 4px 0 #B71C1C,
+      0 5px 0 #B71C1C,
+      0 6px 0 rgba(0,0,0,0.1),
+      0 10px 10px rgba(0,0,0,0.2);
+  }
+  
+  .title-3d-yellow {
+    text-shadow: 
+      0 1px 0 #F57F17,
+      0 2px 0 #F57F17,
+      0 3px 0 #F57F17,
+      0 4px 0 #F57F17,
+      0 5px 0 #F57F17,
+      0 6px 0 rgba(0,0,0,0.1),
+      0 10px 10px rgba(0,0,0,0.2);
+  }
+
+  /* 光泽效果 */
+  .shine-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .shine-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,0.3),
+      transparent
+    );
+    animation: shine 4s infinite;
+  }
+  
+  /* 积木网格 */
+  .lego-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  /* 游戏区域 */
+  .game-canvas {
+    @apply rounded-lego border-4 border-lego-black;
+    image-rendering: pixelated;
+  }
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F5F5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D32F2F;
+  border-radius: 5px;
+  border: 2px solid #F5F5F5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #B71C1C;
+}
+
+/* 选中文字样式 */
+::selection {
+  background: rgba(251, 192, 45, 0.5);
+  color: #212121;
+}
