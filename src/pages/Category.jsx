@@ -1,10 +1,9 @@
-import { useParams, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { usePostsByType, getTypeLabel, getTypeColor } from '../hooks/usePosts';
 import PostCard from '../components/PostCard';
 import './Category.css';
 
-export default function Category() {
-  const { type } = useParams();
+export default function Category({ type }) {
   const { posts, loading } = usePostsByType(type);
   
   const typeLabel = getTypeLabel(type);

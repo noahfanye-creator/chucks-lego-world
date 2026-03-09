@@ -10,7 +10,7 @@ export default function Header() {
     <header className="header">
       <div className="header-content">
         <Link to="/" className="logo">
-          <span className="logo-text">📈 Chuck's Market</span>
+          Market Notes
         </Link>
         
         <nav className="nav">
