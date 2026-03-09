@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import matter from 'gray-matter';
 
-// 直接在组件中导入所有markdown文件
-const postModules = import.meta.glob('../content/posts/*.md', { as: 'raw', eager: true });
+// 直接在组件中导入所有 markdown 文件（raw 字符串）
+const postModules = import.meta.glob('../content/posts/*.md', { query: '?raw', import: 'default', eager: true });
 
 export function usePosts() {
   const [posts, setPosts] = useState([]);
