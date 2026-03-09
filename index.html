@@ -1,13 +1,1133 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>chuckfan</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chuck's Market - 市场观察</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8f9fa;
+      color: #1a1a1a;
+      line-height: 1.6;
+    }
+    a { color: inherit; text-decoration: none; }
+    
+    .header {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .logo { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+    .nav { display: flex; gap: 8px; flex-wrap: wrap; }
+    .nav a {
+      color: #666;
+      font-size: 14px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    .nav a:hover, .nav a.active { background: #f0f0f0; color: #1a1a1a; }
+    
+    .main { max-width: 800px; margin: 0 auto; padding: 20px 16px; }
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; }
+    
+    .today-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .today-section .section-title { color: #fff; }
+    
+    .post-card {
+      display: block;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .post-card:hover { border-color: #ddd; box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-2px); }
+    
+    .post-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .post-type { font-size: 12px; color: #fff; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+    .post-date { font-size: 13px; color: #999; }
+    .post-title { font-size: 16px; font-weight: 600; color: #1a1a1a; margin-bottom: 8px; }
+    .post-summary { font-size: 14px; color: #666; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .category-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .category-card {
+      display: flex; flex-direction: column; align-items: center;
+      padding: 20px 12px; border-radius: 12px; cursor: pointer; color: #fff;
+    }
+    .category-card:hover { transform: translateY(-2px); }
+    .category-card.premarket { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); }
+    .category-card.intraday { background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%); }
+    .category-card.postmarket { background: linear-gradient(135deg, #45b7d1 0%, #2c3e50 100%); }
+    .category-card.archive { background: linear-gradient(135deg, #96ceb4 0%, #556270 100%); }
+    .category-icon { font-size: 24px; margin-bottom: 8px; }
+    .category-name { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .category-count { font-size: 12px; opacity: 0.8; }
+    
+    /* Post Page */
+    .post-page { display: none; }
+    .post-header { margin-bottom: 24px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
+    .post-header h1 { font-size: 24px; margin-bottom: 12px; line-height: 1.3; }
+    .summary-box {
+      background: #f9f9f9; border-left: 4px solid #667eea;
+      padding: 12px 16px; border-radius: 0 8px 8px 0; font-size: 15px;
+    }
+    .post-content { font-size: 15px; }
+    .post-content h1, .post-content h2, .post-content h3 { margin-top: 24px; margin-bottom: 12px; }
+    .post-content h2 { font-size: 18px; }
+    .post-content p { margin-bottom: 16px; }
+    .post-content ul, .post-content ol { margin-bottom: 16px; padding-left: 24px; }
+    .post-content li { margin-bottom: 8px; }
+    .post-content blockquote {
+      border-left: 4px solid #667eea; margin: 16px 0;
+      padding: 12px 16px; background: #f9f9f9; border-radius: 0 8px 8px 0;
+    }
+    .back-btn { display: inline-block; margin-top: 32px; color: #667eea; cursor: pointer; }
+    
+    /* Archive */
+    .page-title { font-size: 24px; margin-bottom: 8px; }
+    .archive-stats { font-size: 14px; color: #999; margin-bottom: 24px; }
+    .month-title { font-size: 16px; font-weight: 600; color: #666; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+    
+    @media (max-width: 600px) { .category-grid { grid-template-columns: repeat(2, 1fr); } .header-content { flex-direction: column; } }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">📈 Chuck's Market</div>
+      <nav class="nav" id="nav"></nav>
+    </div>
+  </header>
+  
+  <main class="main" id="main"></main>
+  
+  <script>
+    const postsData = [
+      {
+        slug: '2026-03-09-premarket',
+        title: '盘前卡｜2026年3月9日',
+        date: '2026-03-09',
+        time: '07:30',
+        type: 'premarket',
+        tags: ['盘前', '油价', '地缘冲突', '能源'],
+        summary: '油价破百是今天最大变量，短线利好油气/能源，但谨防高开低走',
+        body: `<h1>盘前卡｜2026年3月9日</h1>
+<h2>一句话结论</h2>
+<ul><li>今日环境：<strong>防守</strong></li>
+<li>今日主线：<strong>油气/能源</strong>；<strong>黄金/避险</strong>；<strong>电网/防御</strong></li>
+<li>今日动作：<strong>防守为主，只做主线，不追高</strong></li></ul>
+<h2>隔夜影响</h2>
+<ol><li><strong>WTI原油突破110美元，霍尔木兹海峡近乎瘫痪</strong><br>影响：偏多<br>对A股含义：油气、航运、煤炭短线刺激，<strong>但谨防高开低走</strong></li>
+<li><strong>美国2月非农-9.2万人，失业率升至4.4%</strong><br>影响：偏空<br>对A股含义：滞胀预期升温，流动性收紧预期强化，成长股承压</li>
+<li><strong>美元指数周涨1.3%至98.96，10年期美债收益率上行至4.13%</strong><br>影响：偏空<br>对A股含义：外资流出压力，北向资金承压</li></ol>
+<h2>今日主线</h2>
+<h3>主线1：油气/能源</h3>
+<ul><li>催化：WTI突破110美元，霍尔木兹海峡流量锐减94%</li>
+<li>观察点：油气板块是否高开低走，承接资金力度</li>
+<li>定性：<strong>强催化</strong></li></ul>
+<h3>主线2：黄金/避险</h3>
+<ul><li>催化：滞胀预期升温+地缘风险+美元走强</li>
+<li>观察点：黄金股、贵金属板块持续性</li>
+<li>定性：<strong>强催化</strong></li></ul>
+<h3>主线3：电网/防御</h3>
+<ul><li>催化：智能电网龙头三连板，两会政策提及+避险轮动</li>
+<li>观察点：是否从题材走成趋势</li>
+<li>定性：<strong>中催化</strong></li></ul>
+<h2>风险提示</h2>
+<ol><li><strong>油气板块可能高开低走</strong>：周末已充分发酵</li>
+<li><strong>成长股继续承压</strong>：油价+滞胀预期对分母端不利</li>
+<li><strong>成交额萎缩</strong>：从3万亿跌下来，增量不足</li></ol>`
+      },
+      {
+        slug: '2026-03-09-intraday',
+        title: '盘中信息汇总_2026-03-09',
+        date: '2026-03-09',
+        time: '11:35',
+        type: 'intraday',
+        tags: ['盘中', '市场观察', '热点轮动', '情绪监控'],
+        summary: '外部地缘冲击驱动风险偏好下修，资金明显从科技成长切向能源资源与电力防御。',
+        body: `<h1>0. 今日三大重点（先看这里）</h1>
+<h2>① 市场状态</h2>
+<ul><li>状态：弱势 / 风险释放</li>
+<li>一句话：中东冲突推升油价，资源防御走强，科技成长与高弹性方向集中承压。</li></ul>
+<h2>② 最强主线</h2>
+<ul><li>当前主线：油气资源 + 煤炭电力</li>
+<li>性质：事件驱动 / 防御避险</li>
+<li>持续性初判：中</li></ul>
+<h2>③ 当前动作</h2>
+<ul><li>操作倾向：观望 / 只跟主线 / 不追高</li>
+<li>一句话：<strong>今天先确认风险释放到哪一步，不在情绪退潮时段硬接高弹性科技。</strong></li></ul>
+<h1>2. 一句话结论</h1>
+<blockquote>今天市场的核心特征是：<strong>外部地缘冲击驱动风险偏好下修，资金明显从科技成长切向能源资源与电力防御。</strong></blockquote>
+<h1>3. 指数与市场温度</h1>
+<h2>指数表现</h2>
+<ul><li>上证指数：-1.13%</li>
+<li>深证成指：-2.14%</li>
+<li>创业板指：-2.42%</li>
+<li>恒生指数：低开 -2.65%</li></ul>
+<h2>市场宽度</h2>
+<ul><li>上涨家数：873</li>
+<li>下跌家数：4553</li>
+<li>涨停家数：38</li>
+<li>跌停家数：11</li>
+<li>成交额：约 18042 亿（放量）</li></ul>
+<h1>5. 今日主线与异动板块</h1>
+<h2>领涨方向</h2>
+<ol><li><strong>油气资源</strong>：中东冲突升级、油价突破 100 美元</li>
+<li><strong>煤炭 / 煤化工</strong>：能源价格预期抬升</li>
+<li><strong>电力</strong>：承接防御属性</li></ol>
+<h2>领跌方向</h2>
+<ol><li><strong>半导体</strong>：高估值成长先被减仓</li>
+<li><strong>CPO / 光模块 / PCB</strong>：高弹性 AI 硬件方向出现兑现</li>
+<li><strong>航空机场 / 出行链</strong>：油价急涨抬升成本预期</li></ol>
+<h1>6. 盘中核心驱动</h1>
+<blockquote>今天盘面的主要驱动来自：<strong>地缘冲突—油价暴涨—风险偏好收缩—资金高低切向资源防御。</strong></blockquote>
+<h1>9. 下午 / 次日观察点</h1>
+<ol><li>资源主线能否继续扩散</li>
+<li>成交量能否继续维持放量</li>
+<li>龙头是否继续强化</li>
+<li>高位股是否继续补跌</li>
+<li>指数是否企稳</li></ol>
+<h2>关键观察位</h2>
+<ul><li>上证关键位：4070 附近</li>
+<li>创业板关键位：3150 附近</li></ul>
+<blockquote><strong>下午最值得盯住的，是科技成长能不能止跌，而不是资源还能冲多高。</strong></blockquote>`
+      },
+      {
+        slug: '2026-03-09-postmarket',
+        title: '盘后总结_2026年3月9日',
+        date: '2026-03-09',
+        time: '15:30',
+        type: 'postmarket',
+        tags: ['盘后', '总结', '油气', '科技'],
+        summary: '油气板块高开低走，科技继续承压，市场进入防御模式',
+        body: `<h1>盘后总结｜2026年3月9日</h1>
+<h2>一句话结论</h2>
+<blockquote>油气高开低走，科技继续承压，市场进入防御模式。</blockquote>
+<h1>今日盘面</h1>
+<h2>指数表现</h2>
+<ul><li>上证指数：-1.13%</li>
+<li>深证成指：-2.14%</li>
+<li>创业板指：-2.42%</li>
+<li>恒生指数：-2.65%</li></ul>
+<h2>市场数据</h2>
+<ul><li>上涨：873家</li>
+<li>下跌：4553家</li>
+<li>涨停：38家</li>
+<li>跌停：11家</li>
+<li>成交额：18042亿（放量）</li></ul>
+<h1>板块表现</h1>
+<h2>领涨</h2>
+<ol><li>油气开采 +5.2%</li>
+<li>煤炭 +3.8%</li>
+<li>电力 +2.1%</li></ol>
+<h2>领跌</h2>
+<ol><li>半导体 -4.5%</li>
+<li>CPO/光模块 -3.8%</li>
+<li>航空机场 -3.2%</li></ol>
+<h1>盘面解读</h1>
+<ol><li><strong>油气高开低走</strong>：周末发酵后开盘即高点，承接资金不足</li>
+<li><strong>科技继续承压</strong>：高估值成长被持续减仓</li>
+<li><strong>资金切换明显</strong>：从科技流向资源/防御</li></ol>
+<h1>明日观察</h1>
+<ol><li>油气分歧后能否修复</li>
+<li>科技是否止跌</li>
+<li>成交量能否维持</li></ol>`
+      }
+    ];
+
+    const typeLabels = { premarket: '盘前', intraday: '盘中', postmarket: '盘后', weekly: '周复盘' };
+    const typeColors = { premarket: '#FF6B6B', intraday: '#4ECDC4', postmarket: '#45B7D1', weekly: '#96CEB4' };
+    
+    let currentPage = 'home';
+    let currentType = null;
+    let currentSlug = null;
+    
+    function render() {
+      const main = document.getElementById('main');
+      const nav = document.getElementById('nav');
+      
+      // Render nav
+      const navItems = [
+        { path: 'home', label: '首页' },
+        { path: 'premarket', label: '盘前' },
+        { path: 'intraday', label: '盘中' },
+        { path: 'postmarket', label: '盘后' },
+        { path: 'archive', label: '归档' }
+      ];
+      
+      nav.innerHTML = navItems.map(item => 
+        `<a href="#" class="${currentPage === item.path && !currentType ? 'active' : ''}" data-page="${item.path}">${item.label}</a>`
+      ).join('');
+      
+      // Add nav click handlers
+      nav.querySelectorAll('a').forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          const page = e.target.dataset.page;
+          if (page === 'home') {
+            currentPage = 'home';
+            currentType = null;
+          } else if (['premarket', 'intraday', 'postmarket', 'archive'].includes(page)) {
+            currentPage = 'category';
+            currentType = page;
+          }
+          render();
+        });
+      });
+      
+      // Render main content
+      if (currentPage === 'home') {
+        renderHome(main);
+      } else if (currentPage === 'category') {
+        renderCategory(main, currentType);
+      } else if (currentPage === 'post') {
+        renderPost(main, currentSlug);
+      } else if (currentPage === 'archive') {
+        renderArchive(main);
+      }
+    }
+    
+    function renderHome(container) {
+      const today = new Date().toISOString().split('T')[0];
+      const todayPosts = postsData.filter(p => p.date === today);
+      
+      const premarketCount = postsData.filter(p => p.type === 'premarket').length;
+      const intradayCount = postsData.filter(p => p.type === 'intraday').length;
+      const postmarketCount = postsData.filter(p => p.type === 'postmarket').length;
+      
+      let html = '';
+      
+      if (todayPosts.length > 0) {
+        html += `<section class="section today-section">
+          <h2 class="section-title">📰 今日最新</h2>
+          ${todayPosts.map(post => renderPostCard(post)).join('')}
+        </section>`;
+      }
+      
+      html += `<section class="section">
+        <h2 class="section-title">🎯 快速入口</h2>
+        <div class="category-grid">
+          <div class="category-card premarket" data-type="premarket">
+            <span class="category-icon">🌅</span>
+            <span class="category-name">盘前</span>
+            <span class="category-count">${premarketCount}篇</span>
+          </div>
+          <div class="category-card intraday" data-type="intraday">
+            <span class="category-icon">⚡</span>
+            <span class="category-name">盘中</span>
+            <span class="category-count">${intradayCount}篇</span>
+          </div>
+          <div class="category-card postmarket" data-type="postmarket">
+            <span class="category-icon">📊</span>
+            <span class="category-name">盘后</span>
+            <span class="category-count">${postmarketCount}篇</span>
+          </div>
+          <div class="category-card archive" data-type="archive">
+            <span class="category-icon">📚</span>
+            <span class="category-name">归档</span>
+            <span class="category-count">${postsData.length}篇</span>
+          </div>
+        </div>
+      </section>
+      
+      <section class="section">
+        <h2 class="section-title">🕐 最近更新</h2>
+        ${postsData.map(post => renderPostCard(post)).join('')}
+      </section>`;
+      
+      container.innerHTML = html;
+      
+      // Add click handlers
+      container.querySelectorAll('.category-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const type = card.dataset.type;
+          if (type === 'archive') {
+            currentPage = 'archive';
+          } else {
+            currentPage = 'category';
+            currentType = type;
+          }
+          render();
+        });
+      });
+      
+      container.querySelectorAll('.post-card').forEach(card => {
+        card.addEventListener('click', () => {
+          currentPage = 'post';
+          currentSlug = card.dataset.slug;
+          render();
+        });
+      });
+    }
+    
+    function renderPostCard(post) {
+      return `<div class="post-card" data-slug="${post.slug}">
+        <div class="post-card-header">
+          <span class="post-type" style="background:${typeColors[post.type]}">${typeLabels[post.type]}</span>
+          <span class="post-date">${post.date} ${post.time ? '· ' + post.time : ''}</span>
+        </div>
+        <h3 class="post-title">${post.title}</h3>
+        ${post.summary ? `<p class="post-summary">${post.summary}</p>` : ''}
+      </div>`;
+    }
+    
+    function renderCategory(container, type) {
+      const filteredPosts = postsData.filter(p => p.type === type);
+      
+      container.innerHTML = `<div class="post-header" style="border-left-color:${typeColors[type]}">
+        <h1>${typeLabels[type]}</h1>
+        <p>${filteredPosts.length} 篇文章</p>
+      </div>
+      ${filteredPosts.map(post => renderPostCard(post)).join('')}`;
+      
+      container.querySelectorAll('.post-card').forEach(card => {
+        card.addEventListener('click', () => {
+          currentPage = 'post';
+          currentSlug = card.dataset.slug;
+          render();
+        });
+      });
+    }
+    
+    function renderArchive(container) {
+      const postsByMonth = {};
+      postsData.forEach(post => {
+        const month = post.date.substring(0, 7);
+        if (!postsByMonth[month]) postsByMonth[month] = [];
+        postsByMonth[month].push(post);
+      });
+      
+      const sortedMonths = Object.keys(postsByMonth).sort((a, b) => b.localeCompare(a));
+      
+      let html = `<h1 class="page-title">📚 文章归档</h1>
+      <p class="archive-stats">共 ${postsData.length} 篇文章</p>`;
+      
+      sortedMonths.forEach(month => {
+        html += `<h2 class="month-title">${month}</h2>`;
+        html += postsByMonth[month].map(post => renderPostCard(post)).join('');
+      });
+      
+      container.innerHTML = html;
+      
+      container.querySelectorAll('.post-card').forEach(card => {
+        card.addEventListener('click', () => {
+          currentPage = 'post';
+          currentSlug = card.dataset.slug;
+          render();
+        });
+      });
+    }
+    
+    function renderPost(container, slug) {
+      const post = postsData.find(p => p.slug === slug);
+      if (!post) {
+        container.innerHTML = `<h2>文章未找到</h2><a class="back-btn" onclick="currentPage='home';render()">返回首页</a>`;
+        return;
+      }
+      
+      container.innerHTML = `<article class="post-page" style="display:block">
+        <header class="post-header">
+          <div class="post-meta">
+            <span class="post-type" style="background:${typeColors[post.type]}">${typeLabels[post.type]}</span>
+            <span class="post-date">${post.date} · ${post.time}</span>
+          </div>
+          <h1>${post.title}</h1>
+          ${post.summary ? `<div class="summary-box"><strong>一句话结论：</strong>${post.summary}</div>` : ''}
+        </header>
+        <div class="post-content">${post.body}</div>
+        <a class="back-btn" onclick="currentPage='home';render()">← 返回首页</a>
+      </article>`;
+    }
+    
+    // Initialize
+    render();
+  </script>
+
+<style>
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.inland-security-footer {
+  position: fixed;
+  z-index: 10;
+  bottom: 0;
+  right: 0;
+  width: fit-content;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.tooltip-container {
+  position: relative;
+}
+
+.trigger-content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background-color: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.minimax-link {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 300;
+  color: #adadad;
+  text-decoration: none;
+}
+
+.minimax-link:visited {
+  color: #adadad;
+}
+
+.minimax-link:hover {
+  color: #666666;
+}
+
+.tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  padding-bottom: 16px; /* 8px 内容间距 + 8px 用于鼠标移动的透明区域 */
+  font-size: 12px;
+  line-height: 17px;
+  background-color: #fafafa;
+  border-radius: 12px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #171717;
+}
+
+/* 创建透明的连接区域，让鼠标可以平滑移动到 tooltip */
+.tooltip-content::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 16px;
+}
+
+.tooltip-container:hover .tooltip-content {
+  display: flex;
+}
+
+.info-section {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.beian-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #171717;
+}
+
+.beian-icon {
+  width: 14px;
+  height: 14px;
+  margin-right: 2px;
+}
+
+.underline-text {
+  color: #171717;
+  text-decoration: underline;
+}
+
+.underline-text:hover {
+  color: #000000;
+}
+
+/* 深色模式支持 */
+@media (prefers-color-scheme: dark) {
+  .trigger-content {
+    background-color: transparent;
+  }
+
+  .minimax-link,
+  .minimax-link:visited {
+    color: #666666;
+  }
+
+  .minimax-link:hover {
+    color: #adadad;
+  }
+
+  .tooltip-content {
+    background-color: #262626;
+    color: #ededed;
+  }
+
+  .beian-link,
+  .underline-text {
+    color: #ededed;
+  }
+
+  .underline-text:hover {
+    color: #ffffff;
+  }
+}
+
+</style>
+<div class="inland-security-footer">
+  <div class="tooltip-container">
+    <div class="trigger-content">
+      <a href="https://www.minimaxi.com/" target="_blank" rel="noreferrer" class="minimax-link">
+        <span>© 2026 MiniMax</span>
+      </a>
+    </div>
+    <div class="tooltip-content">
+      <section class="info-section">
+        <span>上海稀宇科技有限公司</span>
+      </section>
+
+      <section class="info-section">
+        <a class="beian-link" href="https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=31010402010179" target="_blank" rel="noreferrer">
+          <img alt="hailuo-beian-icon" src="https://cdn.hailuoai.com/hailuo-video-web/public_assets/223037d3-79fd-4db0-a456-749f38a6a14b.png" class="beian-icon">
+          <span class="underline-text">沪公网安备31010402010179号</span>
+        </a>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer" class="underline-text">
+          沪ICP备2023003282号-38
+        </a>
+      </section>
+
+      <section class="info-section">
+        <span>模型名称：MiniMax</span>
+        <span>备案号：Shanghai-MiniMax-202505230046</span>
+      </section>
+
+      <section class="info-section">
+        <a href="https://agent.minimaxi.com/doc/zh/terms-of-service.html" target="_blank" rel="noreferrer" class="underline-text">
+          用户协议
+        </a>
+        <a href="https://agent.minimaxi.com/doc/zh/privacy-policy.html" target="_blank" rel="noreferrer" class="underline-text">
+          隐私政策
+        </a>
+      </section>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/**
+ * Iframe 元素高亮注入脚本
+ * 需要在目标网站中引入此脚本来支持跨域 iframe 高亮功能
+ *
+ * 使用方法：
+ * 1. 将此脚本添加到目标网站的 HTML 中
+ * 2. 或通过浏览器扩展、用户脚本等方式注入
+ */
+
+(function () {
+  "use strict";
+
+  // 检查是否在 iframe 中
+  if (window.self === window.top) {
+    return; // 不在 iframe 中，不执行
+  }
+
+  // 检查是否已经初始化过
+  if (window.__iframeHighlightInitialized) {
+    return;
+  }
+  window.__iframeHighlightInitialized = true;
+  console.log("Iframe 高亮脚本已加载");
+
+  // 创建高亮覆盖层
+  var overlay = document.createElement("div");
+  overlay.id = "iframe-highlight-overlay";
+  overlay.style.cssText = "\n    position: fixed;\n    top: 0;\n    left: 0;\n    width: 100vw;\n    height: 100vh;\n    pointer-events: none;\n    z-index: 999999;\n    overflow: hidden;\n  ";
+
+  // 创建悬停高亮框（虚线边框）
+  var highlightBox = document.createElement("div");
+  highlightBox.id = "iframe-highlight-box";
+  highlightBox.style.cssText = "\n    position: absolute;\n    border: 2px dashed #007AFF;\n    background: rgba(0, 122, 255, 0.08);\n    pointer-events: none;\n    display: none;\n    transition: all 0.1s ease;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.8);\n    border-radius: 2px;\n  ";
+
+  // 创建选中节点的常驻高亮框（实线边框）
+  var selectedBox = document.createElement("div");
+  selectedBox.id = "iframe-selected-box";
+  selectedBox.style.cssText = "\n    position: absolute;\n    border: 2px solid #007AFF;\n    pointer-events: none;\n    display: none;\n    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9), 0 0 8px rgba(255, 107, 53, 0.4);\n    border-radius: 2px;\n    z-index: 1000000;\n  ";
+
+  // 创建悬停标签显示
+  var tagLabel = document.createElement("div");
+  tagLabel.id = "iframe-tag-label";
+  tagLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 2px 6px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 2px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000001;\n    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);\n    font-weight: 500;\n  ";
+
+  // 创建选中节点标签
+  var selectedLabel = document.createElement("div");
+  selectedLabel.id = "iframe-selected-label";
+  selectedLabel.style.cssText = "\n    position: absolute;\n    background: #007AFF;\n    color: white;\n    padding: 3px 8px;\n    font-size: 11px;\n    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;\n    border-radius: 3px;\n    pointer-events: none;\n    display: none;\n    white-space: nowrap;\n    z-index: 1000002;\n    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);\n    font-weight: 600;\n  ";
+  overlay.appendChild(highlightBox);
+  overlay.appendChild(selectedBox);
+  overlay.appendChild(tagLabel);
+  overlay.appendChild(selectedLabel);
+  document.body.appendChild(overlay);
+
+  // 存储当前选中的元素
+  var selectedElement = null;
+  var highlightEnabled = false;
+
+  // 更新选中元素的高亮显示
+  function updateSelectedHighlight(element) {
+    console.log("updateSelectedHighlight called with:", element);
+    if (!element) {
+      selectedBox.style.display = "none";
+      selectedLabel.style.display = "none";
+      selectedElement = null;
+      console.log("Cleared selected highlight");
+      return;
+    }
+    selectedElement = element;
+    var rect = element.getBoundingClientRect();
+    console.log("Selected element rect:", rect);
+
+    // 更新选中高亮框位置
+    selectedBox.style.display = "block";
+    selectedBox.style.left = "".concat(rect.left - 2, "px");
+    selectedBox.style.top = "".concat(rect.top - 2, "px");
+    selectedBox.style.width = "".concat(rect.width + 4, "px");
+    selectedBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新选中标签位置和内容
+    selectedLabel.style.display = "block";
+    selectedLabel.textContent = "\u2713 <".concat(element.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 28;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 5) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    var labelWidth = selectedLabel.offsetWidth || 100; // 预估宽度
+    if (labelLeft + labelWidth > window.innerWidth - 10) {
+      labelLeft = window.innerWidth - labelWidth - 10;
+    }
+    selectedLabel.style.left = "".concat(Math.max(5, labelLeft), "px");
+    selectedLabel.style.top = "".concat(labelTop, "px");
+    console.log("Selected highlight positioned at:", {
+      left: selectedBox.style.left,
+      top: selectedBox.style.top,
+      width: selectedBox.style.width,
+      height: selectedBox.style.height
+    });
+  }
+  function getElementSelector(element) {
+    if (!(element instanceof Element)) throw new Error('Argument must be a DOM element');
+    var segments = [];
+    var current = element;
+    while (current !== document.documentElement) {
+      var selector = '';
+      // 优先检查唯一ID
+      if (current.id && document.querySelectorAll("#".concat(current.id)).length === 1) {
+        segments.unshift("#".concat(current.id));
+        break; // ID唯一，无需继续向上
+      }
+
+      // 生成类名选择器（取第一个有效类名）
+      var classes = Array.from(current.classList).filter(function (c) {
+        return !c.startsWith('js-');
+      });
+      var className = classes.length > 0 ? ".".concat(classes[0]) : '';
+
+      // 生成位置索引（nth-child）
+      var tag = current.tagName.toLowerCase();
+      if (!className) {
+        var siblings = Array.from(current.parentNode.children);
+        var index = siblings.findIndex(function (el) {
+          return el === current;
+        }) + 1;
+        selector = "".concat(tag, ":nth-child(").concat(index, ")");
+      } else {
+        selector = className;
+      }
+      segments.unshift(selector);
+      current = current.parentElement;
+    }
+
+    // 处理根元素
+    if (current === document.documentElement) {
+      segments.unshift('html');
+    }
+    return segments.join(' > ');
+  }
+
+  // 获取元素文本内容
+  function getElementText(element) {
+    var _element$textContent;
+    if (element.tagName === "INPUT") {
+      return element.value || element.placeholder || "";
+    }
+    if (element.tagName === "TEXTAREA") {
+      return element.value || element.placeholder || "";
+    }
+    var text = ((_element$textContent = element.textContent) === null || _element$textContent === void 0 ? void 0 : _element$textContent.trim()) || "";
+    return text.length > 50 ? text.substring(0, 50) + "..." : text;
+  }
+
+  // 获取元素属性信息
+  function getElementAttributes(element) {
+    var attrs = {};
+    for (var i = 0; i < element.attributes.length; i++) {
+      var attr = element.attributes[i];
+      attrs[attr.name] = attr.value;
+    }
+    return attrs;
+  }
+
+  // 鼠标悬停事件处理
+  function handleMouseOver(e) {
+    if (!highlightEnabled) return;
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免高亮 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 如果是已选中的元素，不显示悬停高亮
+    if (target === selectedElement) {
+      highlightBox.style.display = "none";
+      tagLabel.style.display = "none";
+      return;
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+
+    // 更新悬停高亮框位置
+    highlightBox.style.display = "block";
+    highlightBox.style.left = "".concat(rect.left - 2, "px");
+    highlightBox.style.top = "".concat(rect.top - 2, "px");
+    highlightBox.style.width = "".concat(rect.width + 4, "px");
+    highlightBox.style.height = "".concat(rect.height + 4, "px");
+
+    // 更新标签位置和内容
+    tagLabel.style.display = "block";
+    tagLabel.textContent = "<".concat(target.tagName.toLowerCase(), ">");
+
+    // 计算标签位置，确保不超出视窗
+    var labelTop = rect.top - 22;
+    var labelLeft = rect.left;
+
+    // 如果标签会超出顶部，显示在元素下方
+    if (labelTop < 0) {
+      labelTop = rect.bottom + 5;
+    }
+
+    // 如果标签会超出右侧，向左调整
+    if (labelLeft + tagLabel.offsetWidth > window.innerWidth) {
+      labelLeft = window.innerWidth - tagLabel.offsetWidth - 5;
+    }
+    tagLabel.style.left = "".concat(Math.max(0, labelLeft), "px");
+    tagLabel.style.top = "".concat(labelTop, "px");
+
+    // 发送消息到父窗口
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 鼠标离开事件处理
+  function handleMouseOut(e) {
+    if (!highlightEnabled) return;
+    var relatedTarget = e.relatedTarget;
+
+    // 如果鼠标移动到高亮相关元素上，不隐藏高亮
+    if (relatedTarget && (relatedTarget === highlightBox || relatedTarget === tagLabel || relatedTarget === overlay || relatedTarget === selectedBox || relatedTarget === selectedLabel)) {
+      return;
+    }
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-hover",
+        data: null,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 点击事件处理
+  function handleClick(e) {
+    var target = e.target;
+    if (!target || target === overlay || target === highlightBox || target === tagLabel || target === selectedBox || target === selectedLabel) {
+      return;
+    }
+
+    // 避免处理 html 和 body 元素
+    if (target === document.documentElement || target === document.body) {
+      return;
+    }
+
+    // 检查是否是交互元素，这些元素需要保留默认行为
+    var isInteractiveElement = ['input', 'textarea', 'select', 'button', 'a'].includes(target.tagName.toLowerCase());
+
+    // 如果高亮功能启用，对于非交互元素阻止默认行为和事件传播
+    if (highlightEnabled) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    var rect = target.getBoundingClientRect();
+    var selector = getElementSelector(target);
+    var text = getElementText(target);
+    var attributes = getElementAttributes(target);
+    console.log("Element clicked:", {
+      tagName: target.tagName,
+      selector: selector,
+      rect: rect
+    });
+
+    // 立即更新选中高亮
+    updateSelectedHighlight(target);
+
+    // 隐藏悬停高亮，因为现在是选中状态
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    var elementInfo = {
+      tagName: target.tagName.toLowerCase(),
+      rect: {
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom,
+        width: rect.width,
+        height: rect.height,
+        x: rect.x,
+        y: rect.y
+      },
+      selector: selector,
+      text: text,
+      attributes: attributes,
+      url: window.location.href,
+      path: window.location.pathname,
+      timestamp: Date.now()
+    };
+    try {
+      window.parent.postMessage({
+        type: "iframe-element-click",
+        data: elementInfo,
+        source: "iframe-highlight-injector"
+      }, "*");
+    } catch (error) {
+      console.warn("无法发送消息到父窗口:", error);
+    }
+  }
+
+  // 监听来自父窗口的消息
+  function handleParentMessage(event) {
+    console.log("Received message from parent:", event.data);
+    if (event.data.type === "iframe-highlight-toggle") {
+      var enabled = event.data.enabled;
+      console.log("Highlight toggle:", enabled);
+      if (enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "enable-iframe-highlight") {
+      console.log("Enable iframe highlight");
+      enableHighlight();
+    } else if (event.data.type === "disable-iframe-highlight") {
+      console.log("Disable iframe highlight");
+      disableHighlight();
+    } else if (event.data.type === "toggle-iframe-highlight") {
+      var _enabled = event.data.enabled !== undefined ? event.data.enabled : !highlightEnabled;
+      console.log("Toggle iframe highlight to:", _enabled);
+      if (_enabled) {
+        enableHighlight();
+      } else {
+        disableHighlight();
+      }
+    } else if (event.data.type === "update-selected-element") {
+      var selector = event.data.selector;
+      console.log("Update selected element with selector:", selector);
+      if (selector) {
+        try {
+          var element = document.querySelector(selector);
+          console.log("Found element by selector:", element);
+          updateSelectedHighlight(element);
+        } catch (error) {
+          console.warn("Failed to select element:", error);
+          updateSelectedHighlight(null);
+        }
+      } else {
+        updateSelectedHighlight(null);
+      }
+    } else if (event.data.type === "clear-selected-element") {
+      console.log("Clear selected element");
+      updateSelectedHighlight(null);
+    }
+  }
+
+  // 启用高亮功能
+  function enableHighlight() {
+    console.log("Enabling highlight");
+    document.addEventListener("mouseover", handleMouseOver, true);
+    document.addEventListener("mouseout", handleMouseOut, true);
+    document.addEventListener("click", handleClick, true);
+    highlightEnabled = true;
+    overlay.style.display = "block";
+  }
+
+  // 禁用高亮功能
+  function disableHighlight() {
+    console.log("Disabling highlight");
+    highlightEnabled = false;
+    // 保持事件监听器，但通过 highlightEnabled 变量控制行为
+    // 这样可以保留选中状态的显示
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    // 不隐藏 selectedBox 和 selectedLabel，保留选中状态
+  }
+
+  // 完全禁用高亮功能（移除所有监听器）
+  function fullyDisableHighlight() {
+    console.log("Fully disabling highlight");
+    highlightEnabled = false;
+    document.removeEventListener("mouseover", handleMouseOver, true);
+    document.removeEventListener("mouseout", handleMouseOut, true);
+    document.removeEventListener("click", handleClick, true);
+    overlay.style.display = "none";
+    highlightBox.style.display = "none";
+    tagLabel.style.display = "none";
+    selectedBox.style.display = "none";
+    selectedLabel.style.display = "none";
+  }
+
+  // 添加事件监听
+  enableHighlight();
+  window.addEventListener("message", handleParentMessage);
+
+  // 暴露全局函数供外部调用
+  window.__iframeHighlightControl = {
+    enable: enableHighlight,
+    disable: disableHighlight,
+    fullyDisable: fullyDisableHighlight,
+    isEnabled: function isEnabled() {
+      return highlightEnabled;
+    },
+    getSelectedElement: function getSelectedElement() {
+      return selectedElement;
+    },
+    updateSelected: updateSelectedHighlight,
+    // 通过消息发送开关控制
+    sendToggleMessage: function sendToggleMessage(enabled) {
+      window.parent.postMessage({
+        type: 'iframe-highlight-status',
+        enabled: enabled || highlightEnabled,
+        source: 'iframe-highlight-injector'
+      }, '*');
+    }
+  };
+
+  // 通知父窗口脚本已加载
+  try {
+    window.parent.postMessage({
+      type: "iframe-highlight-ready",
+      data: {
+        url: window.location.href,
+        userAgent: navigator.userAgent,
+        timestamp: Date.now()
+      },
+      source: "iframe-highlight-injector"
+    }, "*");
+  } catch (error) {
+    console.warn("无法发送就绪消息到父窗口:", error);
+  }
+
+  // 清理函数
+  window.__iframeHighlightCleanup = function () {
+    fullyDisableHighlight();
+    window.removeEventListener("message", handleParentMessage);
+    if (overlay.parentElement) {
+      overlay.parentElement.removeChild(overlay);
+    }
+    delete window.__iframeHighlightInitialized;
+    delete window.__iframeHighlightCleanup;
+  };
+})();
+
+</script>
+</body>
 </html>
