@@ -1,0 +1,49 @@
+name: Deploy to Server (chuckfan.com)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create dist directory
+        run: |
+          mkdir -p dist
+          cp index.html dist/
+
+      - name: Setup SSH key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "$SSH_PRIVATE_KEY" | tr -d '\r' > "$HOME/.ssh/deploy_key"
+          chmod 600 "$HOME/.ssh/deploy_key"
+
+      - name: Add server to known hosts
+        run: ssh-keyscan -H 154.17.3.182 >> ~/.ssh/known_hosts
+
+      - name: Clear remote directory
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "rm -rf /root/projects/chuck/* 2>/dev/null; mkdir -p /root/projects/chuck"
+
+      - name: Deploy to server
+        run: |
+          scp -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no -r dist/* root@154.17.3.182:/root/projects/chuck/
+
+      - name: Reload Nginx
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "chmod -R 755 /root/projects/chuck && nginx -t && systemctl reload nginx"
