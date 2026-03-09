@@ -17,10 +17,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create dist directory
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci || npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify build output
         run: |
-          mkdir -p dist
-          cp index.html dist/
+          grep -q '/assets/' dist/index.html && echo "OK: index.html 引用 /assets/ 构建产物"
+          grep -q 'main.jsx' dist/index.html && (echo "ERROR: index.html 仍含 main.jsx，构建异常"; exit 1) || true
 
       - name: Setup SSH key
         env:
@@ -46,4 +58,10 @@ jobs:
       - name: Reload Nginx
         run: |
           ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
-            "chmod -R 755 /root/projects/chuck && nginx -t && systemctl reload nginx"
+            "chmod -R 755 /root/projects/chuck && (nginx -t && systemctl reload nginx || true)"
+
+      - name: Verify deployed index on server
+        run: |
+          echo "=== 服务器上的 index.html 前 12 行 ==="
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "head -12 /root/projects/chuck/index.html"

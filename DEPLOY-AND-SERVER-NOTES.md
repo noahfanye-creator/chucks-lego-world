@@ -154,6 +154,24 @@ ls -la /root/projects/chuck/
 
 ## 十、常见问题 / 故障排查
 
+### 若线上白屏并报 main.jsx / MIME 错误，按顺序做：
+
+1. **看 GitHub Actions 是否部署成功**  
+   打开 [Actions](https://github.com/noahfanye-creator/chucks-lego-world/actions)，看最近一次 “Deploy to Server” 是否绿色。看 **“Verify deployed index on server”** 步骤里打印的 `index.html`：若出现的是 `src="/assets/index-xxx.js"` 说明服务器上的文件是对的。
+
+2. **若服务器上已是 /assets/，多半是缓存**  
+   - 域名若走 **Cloudflare**：在 Cloudflare 控制台 → 该域名 → Caching → **Purge Everything**（或 Purge Cache）。  
+   - 再在浏览器无痕模式或强刷（Ctrl+Shift+R）访问 https://chuckfan.com 或 https://www.chuckfan.com。
+
+3. **若 Actions 里显示服务器上的 index 仍是 main.jsx**  
+   说明 Nginx 的 root 可能指到了错误目录，或部署没写进当前站点目录。SSH 到服务器执行：  
+   `cat /root/projects/chuck/index.html | head -12`  
+   若这里已是 `/assets/`，说明部署目录对、但 Nginx 配的 root 不是 `/root/projects/chuck`，需要改 Nginx 配置里的 `root` 并重载。若这里仍是 main.jsx，说明部署没成功，检查 Actions 里 scp 步骤是否有报错。
+
+4. **让之后不再被缓存旧 HTML**  
+   在服务器上执行一次 Nginx 修复脚本（会为 index.html 加上不缓存头）：  
+   本机运行：`./scripts/run-fix-nginx.sh`
+
 ### 1. 报错：main.jsx 返回 MIME 类型 text/html（或 “Expected a JavaScript module script”）
 
 **原因**：浏览器拿到的 `index.html` 仍是旧版，里面对脚本的引用是开发时的 `/src/main.jsx`。部署后构建产物里应是 `/assets/index-xxx.js`，但浏览器或 CDN 缓存了旧的 HTML。
