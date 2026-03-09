@@ -19,6 +19,7 @@ export default function Header() {
           <Link to="/intraday" className={isActive('/intraday')}>盘中</Link>
           <Link to="/postmarket" className={isActive('/postmarket')}>盘后</Link>
           <Link to="/archive" className={isActive('/archive')}>归档</Link>
+          <Link to="/about" className={isActive('/about')}>关于</Link>
         </nav>
       </div>
     </header>

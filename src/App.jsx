@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Category from './pages/Category';
 import Post from './pages/Post';
 import Archive from './pages/Archive';
+import About from './pages/About';
 import './App.css';
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
             <Route path="/intraday" element={<Category type="intraday" />} />
             <Route path="/postmarket" element={<Category type="postmarket" />} />
             <Route path="/archive" element={<Archive />} />
+            <Route path="/about" element={<About />} />
             <Route path="/post/:slug" element={<Post />} />
           </Routes>
         </main>

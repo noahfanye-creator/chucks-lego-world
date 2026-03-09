@@ -1,0 +1,21 @@
+{
+  "name": "Market Notes · 市场观察",
+  "short_name": "市场观察",
+  "description": "记录盘前、盘中、盘后的市场观察与交易思考",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#223248",
+  "theme_color": "#223248",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
