@@ -3,7 +3,7 @@ title: 盘前卡｜2026年3月9日
 date: 2026-03-09
 time: 07:30
 type: premarket
-tags: [盘前, 油价, 地缘冲突, 能源]
+tags: [盘前, 油价, 地缘冲突, 能源, 测试]
 summary: 油价破百是今天最大变量，短线利好油气/能源，但谨防高开低走
 draft: false
 ---
