@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Design system: Oaktree structure + Bloomberg deep blue. Minimal, professional. */
 :root {
   /* Bloomberg-style blues */
