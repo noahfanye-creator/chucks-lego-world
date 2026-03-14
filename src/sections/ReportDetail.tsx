@@ -494,6 +494,103 @@ function buildAiText(kline: KP[], label: string, ind?: RawIndicators): string {
   ].join('\n');
 }
 
+/** 根据原始 API 数据生成 NotebookLM 友好版纯文本（供 /reports/review/:code/notebook 使用） */
+export function buildReportNotebookText(raw: unknown): string {
+  const payload = extractPayload(raw) as Payload;
+  const klineMap = {
+    daily:   normalizeKline(payload.kline),
+    weekly:  normalizeKline(payload.kline_week),
+    monthly: normalizeKline(payload.kline_month),
+    m30:     normalizeKline(payload.kline_30m),
+    m5:      normalizeKline(payload.kline_5m),
+    m1:      normalizeKline(payload.kline_1m),
+  };
+  const ind = payload.indicators;
+  const meta = payload.meta;
+  const plan = meta?.strategic_plan;
+  const chan = meta?.chan;
+  const lines: string[] = [];
+
+  lines.push(`# ${payload.stock_name ?? '-'}（${payload.stock_code ?? '-'}）`);
+  lines.push(`报告日期：${payload.report_date ?? '-'}  生成时间：${payload.generated_at ?? '-'}`);
+  lines.push('');
+
+  const latest = klineMap.daily[klineMap.daily.length - 1];
+  const prev = klineMap.daily[klineMap.daily.length - 2];
+  const headerClose = toNum(meta?.actual_close) ?? latest?.close;
+  const headerPrev = toNum(meta?.actual_prev_close) ?? prev?.close;
+  const headerChgPct = toNum(meta?.actual_change_pct) ??
+    (headerClose != null && headerPrev != null && headerPrev !== 0 ? (headerClose - headerPrev) / headerPrev * 100 : undefined);
+  lines.push('## 当日概览');
+  lines.push(`收盘价 ${fmt(headerClose)}，涨跌 ${headerChgPct != null ? (headerChgPct >= 0 ? '+' : '') + headerChgPct.toFixed(2) + '%' : '-'}。`);
+  if (latest) {
+    lines.push(`开盘 ${fmt(latest.open)} 最高 ${fmt(latest.high)} 最低 ${fmt(latest.low)} 成交量 ${(latest.volume / 10000).toFixed(2)} 万手。`);
+  }
+  lines.push('');
+
+  for (const tab of TABS) {
+    const data = klineMap[tab.key as keyof typeof klineMap];
+    const indForTab = tab.key === 'daily' ? ind : undefined;
+    lines.push(`## ${tab.label}`);
+    lines.push(buildSummary(data, tab.label));
+    lines.push('');
+    lines.push(buildAiText(data, tab.label, indForTab));
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
+  if (chan) {
+    lines.push('## 缠论结构摘要');
+    const fractalList = chan.fractals ?? chan.fenxing ?? [];
+    const bisFromFractals = fractalList.length >= 2 ? fractalList.slice(1).map((fx, i) => {
+      const prevFx = fractalList[i];
+      const startTs = prevFx.timestamp ?? prevFx.date ?? prevFx.trade_date ?? '';
+      const endTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '';
+      const startDate = startTs.length >= 10 ? startTs.slice(0, 10) : (startTs || '-');
+      const endDate = endTs.length >= 10 ? endTs.slice(0, 10) : (endTs || '-');
+      const startType = prevFx.fractal_type ?? prevFx.type ?? '';
+      const dir = startType === 'bottom' ? '向上笔' : '向下笔';
+      return `${dir} ${startDate} → ${endDate}`;
+    }) : [];
+    lines.push(`共 ${fractalList.length} 个分型，${bisFromFractals.length} 笔。`);
+    if (chan.zhongshu) {
+      lines.push(`中枢区间：${fmt(chan.zhongshu.low)} ~ ${fmt(chan.zhongshu.high)}。`);
+    }
+    if (bisFromFractals.length > 0) {
+      lines.push('最近笔：' + bisFromFractals.slice(-5).reverse().join('；'));
+    }
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
+  if (plan) {
+    lines.push('## 操作策略建议');
+    const biasMap = { Bullish: '看多', Bearish: '看空', Neutral: '中性' };
+    const trendBias = plan.scenarios?.trend_bias ? (biasMap[plan.scenarios.trend_bias as keyof typeof biasMap] ?? plan.scenarios.trend_bias) : null;
+    if (trendBias) lines.push(`趋势判断：${trendBias}`);
+    if (plan.scenarios?.action_plan) lines.push(`操作建议：${plan.scenarios.action_plan}`);
+    if (plan.grid) {
+      const g = plan.grid;
+      if (g.attack_line_ma5 != null && g.attack_line_ma5 !== '') lines.push(`攻击线(MA5)：${g.attack_line_ma5}`);
+      if (g.defense_line_ma20 != null && g.defense_line_ma20 !== '') lines.push(`防守线(MA20)：${g.defense_line_ma20}`);
+      if (g.support != null && g.support !== '') lines.push(`支撑位：${g.support}`);
+      if (g.resistance != null && g.resistance !== '') lines.push(`阻力位：${g.resistance}`);
+    }
+    if (plan.sector_context?.related_index || plan.sector_context?.note) {
+      lines.push(`板块参考：${plan.sector_context.related_index ?? ''} ${plan.sector_context.note ?? ''}`.trim());
+    }
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
+  lines.push(`数据来源：chuckfan.com  报告日期：${payload.report_date ?? '-'}。`);
+  lines.push('本报告仅供参考，不构成任何投资建议。投资有风险，决策须谨慎。');
+  return lines.join('\n');
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Card({ label, value, unit, valueClass }: { label: string; value: string; unit?: string; valueClass?: string }) {
@@ -679,9 +776,12 @@ export default function ReportDetailSection() {
         <div className="mx-auto max-w-7xl px-6 py-2.5">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:items-center">
             {/* 左 */}
-            <div>
+            <div className="flex flex-wrap items-center gap-2">
               <Link to="/reports" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors">
                 <ArrowLeft className="h-3.5 w-3.5" />返回报告列表
+              </Link>
+              <Link to={`/reports/review/${code}/notebook`} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors">
+                NotebookLM 视图
               </Link>
             </div>
             {/* 中 */}

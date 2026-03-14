@@ -7,6 +7,7 @@ import Archive from './pages/Archive';
 import About from './pages/About';
 import ReportsList from './pages/ReportsList';
 import ReportReviewDetail from './pages/ReportReviewDetail';
+import ReportReviewNotebook from './pages/ReportReviewNotebook';
 import './App.css';
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
             <Route path="/post/:slug" element={<Post />} />
             <Route path="/reports" element={<ReportsList />} />
             <Route path="/reports/review/:code" element={<ReportReviewDetail />} />
+            <Route path="/reports/review/:code/notebook" element={<ReportReviewNotebook />} />
           </Routes>
         </main>
       </div>
