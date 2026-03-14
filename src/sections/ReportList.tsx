@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import type { ReportIndexItem } from '@/types/reports';
 
 const TAB_MAP = {
@@ -10,18 +8,6 @@ const TAB_MAP = {
   intraday: '日内报告',
   market: '市场全景',
 } as const;
-
-const TYPE_LABEL: Record<string, string> = {
-  review: '复盘',
-  intraday: '日内',
-  market: '全景',
-};
-
-const TYPE_COLOR: Record<string, string> = {
-  review: 'bg-blue-100 text-blue-700',
-  intraday: 'bg-orange-100 text-orange-700',
-  market: 'bg-green-100 text-green-700',
-};
 
 export default function ReportListSection() {
   const [reports, setReports] = useState<ReportIndexItem[]>([]);
@@ -46,15 +32,48 @@ export default function ReportListSection() {
       .finally(() => setLoading(false));
   }, []);
 
+  // 按 trade_date 分组的复盘报告
+  const reviewGroups = (() => {
+    const grouped: Record<string, ReportIndexItem[]> = {};
+    reports
+      .filter((r) => r.type === 'review')
+      .forEach((item) => {
+        const d = item.trade_date || item.date || '';
+        if (!grouped[d]) grouped[d] = [];
+        grouped[d].push(item);
+      });
+    // 按日期倒序排列
+    return Object.entries(grouped).sort(([a], [b]) => b.localeCompare(a));
+  })();
+
+  const renderEmpty = () => (
+    <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 py-16 text-center text-sm text-gray-400">
+      暂无数据，敬请期待
+    </div>
+  );
+
+  const renderLoading = () => (
+    <div className="flex items-center justify-center py-16 text-sm text-gray-500">
+      正在加载报告列表…
+    </div>
+  );
+
+  const renderError = () => (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">
+      <p>{error}</p>
+      <p className="mt-2 text-xs text-amber-700">
+        请检查 <span className="font-mono">/data/reports/index.json</span> 是否可访问。
+      </p>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white">
       <main className="mx-auto max-w-5xl px-4 py-8">
         <header className="mb-8 space-y-2">
           <p className="text-sm font-medium tracking-wide text-gray-400">REPORT CENTER</p>
           <h1 className="text-2xl font-semibold text-gray-900 sm:text-3xl">报告中心</h1>
-          <p className="text-sm text-gray-500">
-            个股复盘 · 日内分析 · 市场全景
-          </p>
+          <p className="text-sm text-gray-500">个股复盘 · 日内分析 · 市场全景</p>
         </header>
 
         <Tabs defaultValue="review" className="w-full">
@@ -70,65 +89,46 @@ export default function ReportListSection() {
             ))}
           </TabsList>
 
-          {(Object.keys(TAB_MAP) as Array<keyof typeof TAB_MAP>).map((tabKey) => (
-            <TabsContent key={tabKey} value={tabKey} className="mt-0">
-              {loading ? (
-                <div className="flex items-center justify-center py-16 text-sm text-gray-500">
-                  正在加载报告列表…
-                </div>
-              ) : error ? (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">
-                  <p>{error}</p>
-                  <p className="mt-2 text-xs text-amber-700">
-                    请检查 <span className="font-mono">/data/reports/index.json</span> 是否可访问。
-                  </p>
-                </div>
-              ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
-                  {reports
-                    .filter((r) => r.type === tabKey)
-                    .map((item) => (
-                      <Link key={`${item.code}-${item.date}`} to={item.url}>
-                        <Card className="group h-full border-slate-200 bg-slate-50/80 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-sm">
-                          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
-                            <div>
-                              <CardTitle className="text-base font-semibold text-gray-900">
-                                {item.name}
-                              </CardTitle>
-                              <p className="mt-1 text-xs text-gray-500">
-                                <span className="font-mono text-gray-700">{item.code}</span>
-                                <span className="mx-1 text-gray-400">·</span>
-                                <span>{item.date}</span>
-                              </p>
+          {/* 复盘报告 Tab */}
+          <TabsContent value="review" className="mt-0">
+            {loading ? renderLoading() : error ? renderError() : reviewGroups.length === 0 ? renderEmpty() : (
+              <div className="space-y-8">
+                {reviewGroups.map(([date, items]) => (
+                  <div key={date}>
+                    <h2 className="mb-3 text-sm font-semibold text-gray-500 tracking-wide">{date}</h2>
+                    <div className="space-y-3">
+                      {items.map((item) => (
+                        <Link key={`${item.code}-${item.trade_date || item.date}`} to={item.url}>
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-5 py-4 transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white hover:shadow-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-base font-semibold text-gray-900">{item.name}</span>
+                              <span className="font-mono text-sm text-gray-500">{item.code}</span>
                             </div>
-                            <Badge
-                              variant="secondary"
-                              className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${TYPE_COLOR[item.type] ?? ''}`}
-                            >
-                              {TYPE_LABEL[item.type] ?? item.type}
-                            </Badge>
-                          </CardHeader>
-                          <CardContent className="flex items-center justify-between pt-2 text-xs text-gray-500">
-                            <span>点击查看详情</span>
-                            <span className="text-[11px] text-gray-400">
-                              最新 · {TAB_MAP[item.type as keyof typeof TAB_MAP] ?? '报告'}
-                            </span>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    ))}
+                            <div className="mt-1 flex items-center gap-3 text-xs text-gray-400">
+                              <span>交易日：{item.trade_date || item.date || '-'}</span>
+                              {item.generated_at && (
+                                <span>生成：{item.generated_at.slice(11, 16)}</span>
+                              )}
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-                  {!loading &&
-                    !error &&
-                    reports.filter((r) => r.type === tabKey).length === 0 && (
-                      <div className="col-span-2 rounded-lg border border-dashed border-slate-200 bg-slate-50 py-12 text-center text-sm text-gray-500">
-                        暂无{TAB_MAP[tabKey]}
-                      </div>
-                    )}
-                </div>
-              )}
-            </TabsContent>
-          ))}
+          {/* 日内报告 Tab */}
+          <TabsContent value="intraday" className="mt-0">
+            {renderEmpty()}
+          </TabsContent>
+
+          {/* 市场全景 Tab */}
+          <TabsContent value="market" className="mt-0">
+            {renderEmpty()}
+          </TabsContent>
         </Tabs>
 
         <div className="mt-8 text-right text-xs text-gray-400">
@@ -138,4 +138,3 @@ export default function ReportListSection() {
     </div>
   );
 }
-

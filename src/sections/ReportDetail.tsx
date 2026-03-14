@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import ReactECharts from 'echarts-for-react';
 import type { EChartsOption } from 'echarts';
 import { ArrowLeft } from 'lucide-react';
@@ -641,6 +641,8 @@ function IndRow({ label, value, note, noteClass }: { label: string; value: strin
 
 export default function ReportDetailSection() {
   const { code } = useParams<{ code: string }>();
+  const [searchParams] = useSearchParams();
+  const date = searchParams.get('date');
   const [raw, setRaw] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -649,14 +651,17 @@ export default function ReportDetailSection() {
   useEffect(() => {
     if (!code) return;
     setLoading(true); setError(null);
-    fetch(`/data/reports/${code}/review_latest.json`)
+    const jsonUrl = date
+      ? `/data/reports/${code}/review_${date}.json`
+      : `/data/reports/${code}/review_latest.json`;
+    fetch(jsonUrl)
       .then(r => { if (!r.ok) throw new Error('加载报告失败'); return r.json(); })
       .then(j => {
         setRaw(j);
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : '加载失败'))
       .finally(() => setLoading(false));
-  }, [code]);
+  }, [code, date]);
 
   const payload = useMemo(() => raw ? extractPayload(raw) : ({} as Payload), [raw]);
 

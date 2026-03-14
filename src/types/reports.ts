@@ -3,8 +3,11 @@ export interface ReportIndexItem {
   type: 'review' | 'intraday' | 'market';
   code: string;
   name: string;
-  date: string;
+  date?: string;
+  trade_date?: string;
+  generated_at?: string;
   url: string;
+  html_url?: string;
 }
 
 /** 复盘报告详情（review_latest.json） */
