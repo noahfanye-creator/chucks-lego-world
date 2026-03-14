@@ -1,8 +1,22 @@
+import path from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   base: '/',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    proxy: {
+      '/data': {
+        target: 'http://www.chuckfan.com',
+        changeOrigin: true,
+      },
+    },
+  },
   plugins: [
     react(),
     {
