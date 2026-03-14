@@ -5,6 +5,8 @@ import Category from './pages/Category';
 import Post from './pages/Post';
 import Archive from './pages/Archive';
 import About from './pages/About';
+import ReportsList from './pages/ReportsList';
+import ReportReviewDetail from './pages/ReportReviewDetail';
 import './App.css';
 
 function App() {
@@ -21,6 +23,8 @@ function App() {
             <Route path="/archive" element={<Archive />} />
             <Route path="/about" element={<About />} />
             <Route path="/post/:slug" element={<Post />} />
+            <Route path="/reports" element={<ReportsList />} />
+            <Route path="/reports/review/:code" element={<ReportReviewDetail />} />
           </Routes>
         </main>
       </div>
