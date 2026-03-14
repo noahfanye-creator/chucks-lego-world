@@ -591,6 +591,25 @@ export function buildReportNotebookText(raw: unknown): string {
   return lines.join('\n');
 }
 
+/** 仅生成 buildAiText 的完整输出（供 /reports/review/:code/ai-summary 使用） */
+export function buildReportAiSummaryText(raw: unknown): string {
+  const payload = extractPayload(raw) as Payload;
+  const klineMap = {
+    daily:   normalizeKline(payload.kline),
+    weekly:  normalizeKline(payload.kline_week),
+    monthly: normalizeKline(payload.kline_month),
+    m30:     normalizeKline(payload.kline_30m),
+    m5:      normalizeKline(payload.kline_5m),
+    m1:      normalizeKline(payload.kline_1m),
+  };
+  const ind = payload.indicators;
+  return TABS.map(tab => {
+    const data = klineMap[tab.key as keyof typeof klineMap];
+    const indForTab = tab.key === 'daily' ? ind : undefined;
+    return buildAiText(data, tab.label, indForTab);
+  }).join('\n\n---\n\n');
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function Card({ label, value, unit, valueClass }: { label: string; value: string; unit?: string; valueClass?: string }) {
@@ -690,6 +709,14 @@ export default function ReportDetailSection() {
   const chartOption = useMemo(() => buildChartOption(activeKline), [activeKline]);
   const tabLabel = TABS.find(t => t.key === activeTab)?.label ?? '日线';
   const chartSummary = useMemo(() => buildSummary(activeKline, tabLabel), [activeKline, tabLabel]);
+
+  const fullAiSummaryText = useMemo(() => {
+    return TABS.map(tab => {
+      const data = klineMap[tab.key as keyof typeof klineMap];
+      const indForTab = tab.key === 'daily' ? ind : undefined;
+      return buildAiText(data, tab.label, indForTab);
+    }).join('\n\n---\n\n');
+  }, [klineMap, ind]);
 
   // Technical indicators — close price for relative %
   const closePrice = headerClose ?? latest?.close;
@@ -1448,6 +1475,8 @@ export default function ReportDetailSection() {
             过往表现不代表未来收益，请投资者自行判断并承担投资风险。
           </p>
         </footer>
+
+        <pre id="ai-summary-text" style={{ display: 'none' }}>{fullAiSummaryText}</pre>
 
       </main>
     </div>

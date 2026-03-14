@@ -8,6 +8,7 @@ import About from './pages/About';
 import ReportsList from './pages/ReportsList';
 import ReportReviewDetail from './pages/ReportReviewDetail';
 import ReportReviewNotebook from './pages/ReportReviewNotebook';
+import ReportReviewAiSummary from './pages/ReportReviewAiSummary';
 import './App.css';
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
             <Route path="/reports" element={<ReportsList />} />
             <Route path="/reports/review/:code" element={<ReportReviewDetail />} />
             <Route path="/reports/review/:code/notebook" element={<ReportReviewNotebook />} />
+            <Route path="/reports/review/:code/ai-summary" element={<ReportReviewAiSummary />} />
           </Routes>
         </main>
       </div>
