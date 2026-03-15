@@ -14,6 +14,10 @@
 # 指定 JSON 路径 → 在同目录生成 review_2026-03-15.md 和 review_latest.md
 python3 scripts/generate_review_md.py /root/data/reports/603092/review_2026-03-15.json
 
+# 额外生成与 PDF 报告同名的 MD（与 stock_report_generator 的 get_review_report_filename 一致）：代码_月日_A复盘_名称.md
+python3 scripts/generate_review_md.py /root/data/reports/603092/review_2026-03-15.json --pdf-name
+# 例：sz300474_0315_A复盘_景嘉微.md
+
 # 只生成带日期的文件，不写 review_latest.md
 python3 scripts/generate_review_md.py /root/data/reports/603092/review_2026-03-15.json --no-latest
 
@@ -78,3 +82,5 @@ Markdown 内容与前端「报告详情页」+「Notebook 视图」一致，由 
 - `review_2026-03-15.json` / `review_2026-03-15.md`：按交易日的报告，内容在生成时与当日 `review_latest` 一致。
 
 NotebookLM 建议使用**带日期的 URL**（如 `review_2026-03-15.md`），以便区分不同日期的报告。
+
+**MD 与 PDF 同名**：脚本支持 `--pdf-name`，会额外写出与 **stock_report_generator** 中 `get_review_report_filename` 相同规则的文件名：`代码_月日_A复盘_名称.md`（如 `sz300474_0315_A复盘_景嘉微.md`），与 PDF 的 `代码_月日_A复盘_名称.pdf` 一一对应，便于一起给 NotebookLM。

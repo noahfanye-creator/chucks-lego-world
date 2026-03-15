@@ -24,6 +24,7 @@ TABS = [
     {"key": "m5", "label": "5分钟"},
     {"key": "m1", "label": "1分钟"},
 ]
+TABS_NOTEBOOK = [t for t in TABS if t["key"] != "m1"]
 
 
 def to_num(v: Any) -> float | None:
@@ -373,12 +374,12 @@ def build_report_notebook_text(raw: Any) -> str:
             lines.append("")
         lines.append("---\n")
 
-    last20 = list(reversed(kline[-20:]))
-    if last20:
-        lines.append("## 近20日行情数据")
+    last100 = list(reversed(kline[-100:]))
+    if last100:
+        lines.append("## 近100日行情数据")
         lines.append("| 交易日 | 开盘 | 最高 | 最低 | 收盘 | 涨跌幅 | 成交量(手) | 成交额(亿) |")
         lines.append("|--------|------|------|------|------|--------|------------|------------|")
-        for i, d in enumerate(last20):
+        for i, d in enumerate(last100):
             orig_idx = len(kline) - 1 - i
             prev_close = kline[orig_idx - 1]["close"] if orig_idx > 0 else None
             pct = (d["close"] - prev_close) / prev_close * 100 if prev_close and prev_close != 0 else None
@@ -409,7 +410,7 @@ def build_report_notebook_text(raw: Any) -> str:
         lines.append("")
         lines.append("---\n")
 
-    for tab in TABS:
+    for tab in TABS_NOTEBOOK:
         key, label = tab["key"], tab["label"]
         data = kline_map.get(key) or []
         ind_for_tab = ind if key == "daily" else None
@@ -417,7 +418,7 @@ def build_report_notebook_text(raw: Any) -> str:
         lines.append(build_summary(data, label))
         lines.append("")
         lines.append(build_ai_text(data, label, ind_for_tab))
-        recent_k = data[-20:] if key == "daily" else data[-15:]
+        recent_k = data[-100:]
         if recent_k:
             recent_k = list(reversed(recent_k))
             lines.append("")
@@ -433,7 +434,31 @@ def build_report_notebook_text(raw: Any) -> str:
     if chan:
         lines.append("## 缠论结构")
         fractal_list = chan.get("fractals") or chan.get("fenxing") or []
-        bis = chan.get("bis") or chan.get("bi") or []
+        bis = list(chan.get("bis") or chan.get("bi") or [])
+        has_valid_bis = any(
+            (b.get("start_date") or b.get("start_trade_date") or "").strip()
+            or (b.get("end_date") or b.get("end_trade_date") or "").strip()
+            for b in bis
+        )
+        if not has_valid_bis and len(fractal_list) >= 2:
+            bis = []
+            for i in range(len(fractal_list) - 1):
+                fx, nxt = fractal_list[i], fractal_list[i + 1]
+                start_ts = fx.get("timestamp") or fx.get("date") or fx.get("trade_date") or ""
+                end_ts = nxt.get("timestamp") or nxt.get("date") or nxt.get("trade_date") or ""
+                start_date = start_ts[:10] if len(start_ts) >= 10 else start_ts or "-"
+                end_date = end_ts[:10] if len(end_ts) >= 10 else end_ts or "-"
+                start_type = fx.get("fractal_type") or fx.get("type") or ""
+                direction = "up" if start_type == "bottom" else "down"
+                p_start = to_num(fx.get("price"))
+                p_end = to_num(nxt.get("price"))
+                change_pct = (p_end - p_start) / p_start * 100 if (p_start and p_end and p_start != 0) else None
+                bis.append({
+                    "direction": direction,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "change_pct": change_pct,
+                })
         lines.append(f"共 {len(fractal_list)} 个分型，{len(bis)} 笔。")
         if chan.get("zhongshu"):
             z = chan["zhongshu"]
@@ -497,12 +522,33 @@ def get_report_date(payload: dict) -> str | None:
     return s[:10] if len(s) >= 10 else s or None
 
 
+def _report_date_to_mmdd(report_date: str) -> str:
+    """从 report_date (YYYY-MM-DD 或 YYYYMMDD) 取 MMDD"""
+    s = (report_date or "").strip().replace("-", "").replace(" ", "")
+    if len(s) >= 8:
+        return s[-4:]  # 20260315 -> 0315
+    if len(s) >= 4:
+        return s[-4:].zfill(4)
+    return (s or "0101").zfill(4)
+
+
+def pdf_style_basename(payload: dict, report_date: str) -> str:
+    """与 stock_report_generator 的 get_review_report_filename 一致：[代码]_[月日]_A复盘_[名称].md"""
+    import re
+    code = (payload.get("stock_code") or payload.get("code") or "").strip()
+    name = (payload.get("stock_name") or "未命名").strip()
+    name = re.sub(r'[\\/*?:"<>|]', "", name)
+    mmdd = _report_date_to_mmdd(report_date)
+    return f"{code}_{mmdd}_A复盘_{name}.md"
+
+
 def main() -> None:
     import argparse
-    parser = argparse.ArgumentParser(description="从 review_*.json 生成 review_{date}.md 与 review_latest.md")
+    parser = argparse.ArgumentParser(description="从 review_*.json 生成 review_{date}.md 与 review_latest.md，可选 PDF 风格文件名")
     parser.add_argument("json_path", nargs="?", help="review_*.json 路径（不传则从 stdin 读 JSON）")
     parser.add_argument("-o", "--output", help="只写到此文件（不写 review_latest.md）")
     parser.add_argument("--no-latest", action="store_true", help="不写 review_latest.md，只写 review_{date}.md")
+    parser.add_argument("--pdf-name", action="store_true", help="额外写入与 PDF 一致的文件名（同 stock_report_generator）：代码_月日_A复盘_名称.md")
     args = parser.parse_args()
 
     if args.json_path:
@@ -530,6 +576,12 @@ def main() -> None:
         with open(path_dated, "w", encoding="utf-8") as f:
             f.write(md)
         print(f"Wrote: {path_dated}", file=sys.stderr)
+        if args.pdf_name:
+            pdf_name = pdf_style_basename(payload, report_date)
+            path_pdf_style = os.path.join(out_dir, pdf_name)
+            with open(path_pdf_style, "w", encoding="utf-8") as f:
+                f.write(md)
+            print(f"Wrote: {path_pdf_style}", file=sys.stderr)
     if not args.no_latest and out_dir:
         path_latest = os.path.join(out_dir, "review_latest.md")
         with open(path_latest, "w", encoding="utf-8") as f:

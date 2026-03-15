@@ -11,6 +11,7 @@ const TABS = [
   { key: 'm5', label: '5分钟', field: 'kline_5m' },
   { key: 'm1', label: '1分钟', field: 'kline_1m' },
 ];
+const TABS_NOTEBOOK = TABS.filter((t) => t.key !== 'm1');
 
 function toNum(v) {
   const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
@@ -372,12 +373,12 @@ function buildReportNotebookText(raw) {
     lines.push('');
   }
 
-  const last20 = kline.slice(-20).reverse();
-  if (last20.length > 0) {
-    lines.push('## 近20日行情数据');
+  const last100 = kline.slice(-100).reverse();
+  if (last100.length > 0) {
+    lines.push('## 近100日行情数据');
     lines.push('| 交易日 | 开盘 | 最高 | 最低 | 收盘 | 涨跌幅 | 成交量(手) | 成交额(亿) |');
     lines.push('|--------|------|------|------|------|--------|------------|------------|');
-    last20.forEach((d, i) => {
+    last100.forEach((d, i) => {
       const origIdx = kline.length - 1 - i;
       const prevClose = origIdx > 0 ? kline[origIdx - 1]?.close : undefined;
       const pct = prevClose != null && prevClose !== 0 ? (d.close - prevClose) / prevClose * 100 : undefined;
@@ -407,14 +408,14 @@ function buildReportNotebookText(raw) {
     lines.push('');
   }
 
-  for (const tab of TABS) {
+  for (const tab of TABS_NOTEBOOK) {
     const data = klineMap[tab.key] || [];
     const indForTab = tab.key === 'daily' ? ind : undefined;
     lines.push(`## ${tab.label}`);
     lines.push(buildSummary(data, tab.label));
     lines.push('');
     lines.push(buildAiText(data, tab.label, indForTab));
-    const recentK = tab.key === 'daily' ? data.slice(-20) : data.slice(-15);
+    const recentK = data.slice(-100);
     if (recentK.length > 0) {
       lines.push('');
       lines.push(`### ${tab.label} 最近${recentK.length}根K线`);
@@ -432,7 +433,27 @@ function buildReportNotebookText(raw) {
   if (chan) {
     lines.push('## 缠论结构');
     const fractalList = chan.fractals ?? chan.fenxing ?? [];
-    const bis = chan.bis ?? chan.bi ?? [];
+    let bis = chan.bis ?? chan.bi ?? [];
+    const hasValidBis = bis.some((b) => {
+      const sd = b.start_date ?? b.start_trade_date ?? '';
+      const ed = b.end_date ?? b.end_trade_date ?? '';
+      return (sd && sd !== '-') || (ed && ed !== '-');
+    });
+    if (!hasValidBis && fractalList.length >= 2) {
+      bis = fractalList.slice(0, -1).map((fx, i) => {
+        const next = fractalList[i + 1];
+        const startTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '';
+        const endTs = next.timestamp ?? next.date ?? next.trade_date ?? '';
+        const startDate = startTs.length >= 10 ? startTs.slice(0, 10) : startTs || '-';
+        const endDate = endTs.length >= 10 ? endTs.slice(0, 10) : endTs || '-';
+        const startType = fx.fractal_type ?? fx.type ?? '';
+        const direction = startType === 'bottom' ? 'up' : 'down';
+        const pStart = toNum(fx.price);
+        const pEnd = toNum(next.price);
+        const changePct = pStart != null && pEnd != null && pStart !== 0 ? (pEnd - pStart) / pStart * 100 : undefined;
+        return { direction, start_date: startDate, end_date: endDate, change_pct: changePct };
+      });
+    }
     lines.push(`共 ${fractalList.length} 个分型，${bis.length} 笔。`);
     if (chan.zhongshu) {
       lines.push(`中枢区间：${fmt(chan.zhongshu.low)} ~ ${fmt(chan.zhongshu.high)}`);
