@@ -18,16 +18,23 @@ export default function ReportListSection() {
     setLoading(true);
     setError(null);
     fetch('/data/reports/index.json')
-      .then((res) => {
-        if (!res.ok) throw new Error('加载报告列表失败');
-        return res.json();
-      })
-      .then((data: ReportIndexItem[]) => {
-        setReports(Array.isArray(data) ? data : []);
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`加载失败 (${res.status})`);
+        const text = await res.text();
+        if (!text || !text.trim()) {
+          setReports([]);
+          setError('报告列表为空：服务器 /data/reports/index.json 无内容，请检查报告生成管道是否已写入该文件。');
+          return;
+        }
+        try {
+          const data = JSON.parse(text) as ReportIndexItem[];
+          setReports(Array.isArray(data) ? data : []);
+        } catch {
+          setError('报告列表格式错误：/data/reports/index.json 不是合法 JSON，请检查生成逻辑。');
+        }
       })
       .catch((e: unknown) => {
-        const message = e instanceof Error ? e.message : '加载失败，请稍后重试';
-        setError(message);
+        setError(e instanceof Error ? e.message : '加载失败，请稍后重试');
       })
       .finally(() => setLoading(false));
   }, []);
@@ -60,9 +67,9 @@ export default function ReportListSection() {
 
   const renderError = () => (
     <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center text-sm text-amber-800">
-      <p>{error}</p>
+      <p className="whitespace-pre-wrap">{error}</p>
       <p className="mt-2 text-xs text-amber-700">
-        请检查 <span className="font-mono">/data/reports/index.json</span> 是否可访问。
+        数据由报告生成管道（如 DMIT 服务器）写入 <span className="font-mono">/data/reports/index.json</span>，请确保该文件存在且为合法 JSON 数组。
       </p>
     </div>
   );

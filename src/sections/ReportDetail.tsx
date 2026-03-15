@@ -528,6 +528,91 @@ export function buildReportNotebookText(raw: unknown): string {
   }
   lines.push('');
 
+  // 资金与筹码
+  const moneyFlow = Array.isArray(payload.money_flow) ? payload.money_flow : [];
+  const chip = meta?.chip;
+  if (moneyFlow.length > 0 || meta?.margin || chip || meta?.northbound || meta?.sentiment) {
+    lines.push('## 资金与筹码');
+    if (moneyFlow.length > 0) {
+      lines.push('### 主力资金流向（近10日）');
+      lines.push('| 日期 | 主力流入 | 主力流出 | 主力净额 | 散户净额 |');
+      lines.push('|------|----------|----------|----------|----------|');
+      let mfMain = 0, mfRetail = 0;
+      moneyFlow.forEach((row: MoneyFlowRow) => {
+        const d = row.date ?? row.trade_date ?? '-';
+        const mainIn = toNum(row.main_in); const mainOut = toNum(row.main_out);
+        const mainNet = toNum(row.main_net);
+        const retailNet = mainNet != null ? -mainNet : undefined;
+        if (mainNet != null) mfMain += mainNet;
+        if (retailNet != null) mfRetail += retailNet;
+        lines.push(`| ${d} | ${fmt(mainIn)} | ${fmt(mainOut)} | ${fmt(mainNet)} | ${fmt(retailNet)} |`);
+      });
+      lines.push(`| 累计 | - | - | ${mfMain.toFixed(2)} | ${mfRetail.toFixed(2)} |`);
+      lines.push('单位：万元');
+      lines.push('');
+    }
+    if (meta?.margin) {
+      lines.push('### 融资融券');
+      lines.push(`融资余额 ${fmt(meta.margin.balance)}  融资买入 ${fmt(meta.margin.buy)}  融资偿还 ${fmt(meta.margin.repay)}  融券余额 ${fmt(meta.margin.short_balance)}`);
+      lines.push('');
+    }
+    if (chip) {
+      lines.push('### 筹码分布');
+      lines.push(`获利比例 ${chip.profit_ratio != null ? (chip.profit_ratio * 100).toFixed(2) + '%' : '-'}  平均成本 ${fmt(chip.avg_cost)}  集中度 ${chip.concentration != null ? (chip.concentration * 100).toFixed(2) + '%' : '-'}`);
+      lines.push('');
+    }
+    if (meta?.northbound) {
+      lines.push('### 北向资金');
+      lines.push(`持仓数量 ${meta.northbound.shares ?? '-'}  持仓比例 ${meta.northbound.ratio != null ? fmt(meta.northbound.ratio) + '%' : '-'}  增减 ${meta.northbound.change ?? '-'}`);
+      lines.push('');
+    }
+    if (meta?.sentiment) {
+      lines.push('### 市场情绪');
+      lines.push(`得分 ${Number(meta.sentiment.score).toFixed(2)}  ${meta.sentiment.verdict}  ${meta.sentiment.hint ?? ''}`);
+      lines.push('');
+    }
+    lines.push('---');
+    lines.push('');
+  }
+
+  // 近20日行情
+  const kline = klineMap.daily;
+  const last20 = kline.slice(-20).reverse();
+  if (last20.length > 0) {
+    lines.push('## 近20日行情数据');
+    lines.push('| 交易日 | 开盘 | 最高 | 最低 | 收盘 | 涨跌幅 | 成交量(手) | 成交额(亿) |');
+    lines.push('|--------|------|------|------|------|--------|------------|------------|');
+    last20.forEach((d, i) => {
+      const origIdx = kline.length - 1 - i;
+      const prevClose = origIdx > 0 ? kline[origIdx - 1]?.close : undefined;
+      const pct = prevClose != null && prevClose !== 0 ? (d.close - prevClose) / prevClose * 100 : undefined;
+      const turnover = (d.close * d.volume) / 100000000;
+      const pctStr = pct == null ? '-' : (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%';
+      lines.push(`| ${d.date} | ${d.open.toFixed(2)} | ${d.high.toFixed(2)} | ${d.low.toFixed(2)} | ${d.close.toFixed(2)} | ${pctStr} | ${d.volume.toLocaleString()} | ${turnover.toFixed(2)} |`);
+    });
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
+  // 日线技术指标完整列表
+  if (ind) {
+    lines.push('## 日线技术指标');
+    const indEntries = [
+      ['MA5', ind.MA5], ['MA10', ind.MA10], ['MA20', ind.MA20], ['MA30', ind.MA30], ['MA60', ind.MA60], ['MA120', ind.MA120], ['MA250', ind.MA250],
+      ['EMA12', ind.EMA12], ['EMA26', ind.EMA26],
+      ['RSI6', ind.RSI6], ['RSI12', ind.RSI12], ['RSI14', ind.RSI14], ['RSI24', ind.RSI24],
+      ['MACD', ind.MACD], ['MACD_DIF', ind.MACD_DIF], ['MACD_DEA', ind.MACD_DEA],
+      ['KDJ_K', ind.KDJ_K], ['KDJ_D', ind.KDJ_D], ['KDJ_J', ind.KDJ_J],
+      ['BB_Upper', ind.BB_Upper], ['BB_Middle', ind.BB_Middle], ['BB_Lower', ind.BB_Lower],
+      ['ATR14', ind.ATR14], ['CCI20', ind.CCI20],
+    ].filter(([, v]) => v != null);
+    indEntries.forEach(([label, val]) => lines.push(`${label}: ${fmt(val, (label === 'MACD' || label === 'MACD_DIF' || label === 'MACD_DEA') ? 3 : 2)}`));
+    lines.push('');
+    lines.push('---');
+    lines.push('');
+  }
+
   for (const tab of TABS) {
     const data = klineMap[tab.key as keyof typeof klineMap];
     const indForTab = tab.key === 'daily' ? ind : undefined;
@@ -535,30 +620,50 @@ export function buildReportNotebookText(raw: unknown): string {
     lines.push(buildSummary(data, tab.label));
     lines.push('');
     lines.push(buildAiText(data, tab.label, indForTab));
+    const recentK = tab.key === 'daily' ? data.slice(-20) : data.slice(-15);
+    if (recentK.length > 0) {
+      lines.push('');
+      lines.push(`### ${tab.label} 最近${recentK.length}根K线`);
+      lines.push('| 日期 | 开 | 高 | 低 | 收 | 量(手) |');
+      lines.push('|------|-----|-----|-----|-----|--------|');
+      recentK.reverse().forEach((d: KP) => {
+        lines.push(`| ${d.date} | ${d.open.toFixed(2)} | ${d.high.toFixed(2)} | ${d.low.toFixed(2)} | ${d.close.toFixed(2)} | ${d.volume.toLocaleString()} |`);
+      });
+    }
     lines.push('');
     lines.push('---');
     lines.push('');
   }
 
   if (chan) {
-    lines.push('## 缠论结构摘要');
+    lines.push('## 缠论结构');
     const fractalList = chan.fractals ?? chan.fenxing ?? [];
-    const bisFromFractals = fractalList.length >= 2 ? fractalList.slice(1).map((fx, i) => {
-      const prevFx = fractalList[i];
-      const startTs = prevFx.timestamp ?? prevFx.date ?? prevFx.trade_date ?? '';
-      const endTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '';
-      const startDate = startTs.length >= 10 ? startTs.slice(0, 10) : (startTs || '-');
-      const endDate = endTs.length >= 10 ? endTs.slice(0, 10) : (endTs || '-');
-      const startType = prevFx.fractal_type ?? prevFx.type ?? '';
-      const dir = startType === 'bottom' ? '向上笔' : '向下笔';
-      return `${dir} ${startDate} → ${endDate}`;
-    }) : [];
-    lines.push(`共 ${fractalList.length} 个分型，${bisFromFractals.length} 笔。`);
+    const bis = chan.bis ?? chan.bi ?? [];
+    lines.push(`共 ${fractalList.length} 个分型，${bis.length} 笔。`);
     if (chan.zhongshu) {
-      lines.push(`中枢区间：${fmt(chan.zhongshu.low)} ~ ${fmt(chan.zhongshu.high)}。`);
+      lines.push(`中枢区间：${fmt(chan.zhongshu.low)} ~ ${fmt(chan.zhongshu.high)}`);
     }
-    if (bisFromFractals.length > 0) {
-      lines.push('最近笔：' + bisFromFractals.slice(-5).reverse().join('；'));
+    lines.push('');
+    if (fractalList.length > 0) {
+      lines.push('### 分型列表');
+      fractalList.forEach((fx: Fractal, i: number) => {
+        const rawTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '-';
+        const d = rawTs.length >= 10 ? rawTs.slice(0, 10) : rawTs;
+        const ft = fx.fractal_type ?? fx.type ?? '-';
+        const t = ft === 'top' ? '顶分型' : ft === 'bottom' ? '底分型' : ft;
+        lines.push(`- ${t}  ${d}  价格 ${fmt(fx.price)}`);
+      });
+      lines.push('');
+    }
+    if (bis.length > 0) {
+      lines.push('### 笔列表');
+      bis.forEach((b: { direction?: string; start_date?: string; start_trade_date?: string; end_date?: string; end_trade_date?: string; change_pct?: number }, i: number) => {
+        const dir = b.direction === 'up' ? '向上笔' : b.direction === 'down' ? '向下笔' : String(b.direction ?? '-');
+        const sd = b.start_date ?? b.start_trade_date ?? '-';
+        const ed = b.end_date ?? b.end_trade_date ?? '-';
+        const cp = b.change_pct != null ? (b.change_pct >= 0 ? '+' : '') + b.change_pct.toFixed(2) + '%' : '-';
+        lines.push(`- ${dir}  ${sd} → ${ed}  涨跌幅 ${cp}`);
+      });
     }
     lines.push('');
     lines.push('---');
@@ -812,9 +917,19 @@ export default function ReportDetailSection() {
               <Link to="/reports" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors">
                 <ArrowLeft className="h-3.5 w-3.5" />返回报告列表
               </Link>
-              <Link to={`/reports/review/${code}/notebook`} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors">
-                NotebookLM 视图
-              </Link>
+              {(() => {
+                const reportDateStr = payload.report_date ? String(payload.report_date).replace(/\s.*/, '').slice(0, 10) : '';
+                const mdUrl = reportDateStr ? `https://www.chuckfan.com/data/reports/${code}/review_${reportDateStr}.md` : null;
+                return mdUrl ? (
+                  <a href={mdUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors">
+                    NotebookLM 视图
+                  </a>
+                ) : (
+                  <Link to={`/reports/review/${code}/notebook`} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600 hover:border-slate-300 hover:text-slate-900 transition-colors">
+                    NotebookLM 视图
+                  </Link>
+                );
+              })()}
             </div>
             {/* 中 */}
             <div className="text-center">
