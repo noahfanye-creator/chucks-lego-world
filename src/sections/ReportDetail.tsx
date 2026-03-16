@@ -21,7 +21,7 @@ type RawIndicators = {
 
 type Fractal = {
   fractal_type?: string; type?: string;            // "top" / "bottom"
-  timestamp?: string; date?: string; trade_date?: string;
+  timestamp?: string | number; date?: string; trade_date?: string;
   price?: number; position?: number; is_valid?: boolean;
 };
 
@@ -109,6 +109,34 @@ function fmtPct(v: unknown, d = 2): string {
 function fmtWan(v: unknown): string {
   const n = toNum(v);
   return n == null ? '-' : (n / 10000).toFixed(2);
+}
+
+function getFractalDate(fx: { timestamp?: string | number; date?: string; trade_date?: string }): string {
+  const v = fx.timestamp ?? fx.date ?? fx.trade_date;
+  if (v == null) return '';
+  if (typeof v === 'number') {
+    const d = new Date(v > 1e12 ? v : v * 1000);
+    return Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : String(v);
+  }
+  const s = String(v).trim();
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function klineToFractals(kline: KP[]): Fractal[] {
+  const out: Fractal[] = [];
+  for (let i = 1; i < kline.length - 1; i++) {
+    const cur = kline[i], prev = kline[i - 1], next = kline[i + 1];
+    if (cur.high >= prev.high && cur.high >= next.high)
+      out.push({ date: cur.date, trade_date: cur.date, price: cur.high, fractal_type: 'top', type: 'top' });
+    if (cur.low <= prev.low && cur.low <= next.low)
+      out.push({ date: cur.date, trade_date: cur.date, price: cur.low, fractal_type: 'bottom', type: 'bottom' });
+  }
+  out.sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || (a.type === 'top' ? -1 : 1) * ((a.price ?? 0) - (b.price ?? 0)));
+  const filtered: Fractal[] = [];
+  for (const fx of out) {
+    if (filtered.length === 0 || filtered[filtered.length - 1].type !== fx.type) filtered.push(fx);
+  }
+  return filtered;
 }
 
 function fmtYi(v: unknown): string {
@@ -639,7 +667,10 @@ export function buildReportNotebookText(raw: unknown): string {
 
   if (chan) {
     lines.push('## 缠论结构');
-    const fractalList = chan.fractals ?? chan.fenxing ?? [];
+    let fractalList: Fractal[] = chan.fractals ?? chan.fenxing ?? (chan as { fractal_list?: Fractal[] }).fractal_list ?? [];
+    if (fractalList.length === 0 && klineMap.daily.length >= 3) {
+      fractalList = klineToFractals(klineMap.daily);
+    }
     let bis = chan.bis ?? chan.bi ?? [];
     const hasValidBis = bis.some((b: { start_date?: string; start_trade_date?: string; end_date?: string; end_trade_date?: string }) => {
       const sd = b.start_date ?? b.start_trade_date ?? '';
@@ -649,10 +680,8 @@ export function buildReportNotebookText(raw: unknown): string {
     if (!hasValidBis && fractalList.length >= 2) {
       bis = fractalList.slice(0, -1).map((fx: Fractal, i: number) => {
         const next = fractalList[i + 1];
-        const startTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '';
-        const endTs = next.timestamp ?? next.date ?? next.trade_date ?? '';
-        const startDate = startTs.length >= 10 ? startTs.slice(0, 10) : startTs || '-';
-        const endDate = endTs.length >= 10 ? endTs.slice(0, 10) : endTs || '-';
+        const startDate = getFractalDate(fx) || '-';
+        const endDate = getFractalDate(next) || '-';
         const startType = fx.fractal_type ?? fx.type ?? '';
         const direction = startType === 'bottom' ? 'up' : 'down';
         const pStart = toNum(fx.price);
@@ -668,9 +697,8 @@ export function buildReportNotebookText(raw: unknown): string {
     lines.push('');
     if (fractalList.length > 0) {
       lines.push('### 分型列表');
-      fractalList.forEach((fx: Fractal, i: number) => {
-        const rawTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '-';
-        const d = rawTs.length >= 10 ? rawTs.slice(0, 10) : rawTs;
+      fractalList.forEach((fx: Fractal) => {
+        const d = getFractalDate(fx) || '-';
         const ft = fx.fractal_type ?? fx.type ?? '-';
         const t = ft === 'top' ? '顶分型' : ft === 'bottom' ? '底分型' : ft;
         lines.push(`- ${t}  ${d}  价格 ${fmt(fx.price)}`);

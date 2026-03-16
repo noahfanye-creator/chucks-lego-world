@@ -20,13 +20,27 @@ function getReportDate(payload) {
   return s.slice(0, 10);
 }
 
+/** 与 PDF 命名一致：代码_月日_A复盘_名称.md */
+function pdfStyleBasename(payload, reportDate) {
+  const code = (payload.stock_code || payload.code || '').trim();
+  let name = (payload.stock_name || '未命名').trim().replace(/[\\/*?:"<>|]/g, '');
+  let mmdd = (reportDate || '').replace(/-/g, '').replace(/\s/g, '');
+  if (mmdd.length >= 8) mmdd = mmdd.slice(-4);
+  else if (mmdd.length >= 4) mmdd = mmdd.slice(-4).padStart(4, '0');
+  else mmdd = '0101';
+  return `${code}_${mmdd}_A复盘_${name}.md`;
+}
+
 async function main() {
   let jsonPath = null;
   let outPath = null;
+  let pdfName = false;
   const args = process.argv.slice(2);
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '-o' && args[i + 1]) {
       outPath = args[++i];
+    } else if (args[i] === '--pdf-name') {
+      pdfName = true;
     } else if (!args[i].startsWith('-')) {
       jsonPath = args[i];
     }
@@ -68,6 +82,11 @@ async function main() {
     const outFile = path.join(dir, `review_${reportDate}.md`);
     fs.writeFileSync(outFile, md, 'utf8');
     console.error('Wrote:', outFile);
+    if (pdfName && payload) {
+      const pdfFile = path.join(dir, pdfStyleBasename(payload, reportDate));
+      fs.writeFileSync(pdfFile, md, 'utf8');
+      console.error('Wrote:', pdfFile);
+    }
   } else {
     process.stdout.write(md);
   }

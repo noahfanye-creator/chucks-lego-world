@@ -162,6 +162,46 @@ def nv(v: float | None) -> float | None:
     return v if v is not None else None
 
 
+def _fractal_date(fx: dict) -> str:
+    """从分型对象取日期字符串，支持 timestamp(数字)、date、trade_date。"""
+    v = fx.get("timestamp") or fx.get("date") or fx.get("trade_date")
+    if v is None:
+        return ""
+    if isinstance(v, (int, float)):
+        from datetime import datetime
+        try:
+            if v > 1e12:
+                return datetime.utcfromtimestamp(v / 1000).strftime("%Y-%m-%d")
+            return datetime.utcfromtimestamp(v).strftime("%Y-%m-%d")
+        except Exception:
+            return str(int(v))
+    s = str(v).strip()
+    if len(s) >= 10:
+        return s[:10]
+    if len(s) == 8 and s.isdigit():
+        return f"{s[:4]}-{s[4:6]}-{s[6:8]}"
+    return s
+
+
+def _kline_to_fractals(kline: list[dict]) -> list[dict]:
+    """从日K线计算简单分型：3根K线中间为顶/底分型；再过滤为顶底交替序列以便构成笔。"""
+    raw: list[dict] = []
+    for i in range(1, len(kline) - 1):
+        cur = kline[i]
+        prev_, nxt = kline[i - 1], kline[i + 1]
+        h, l_ = cur["high"], cur["low"]
+        if h >= prev_["high"] and h >= nxt["high"]:
+            raw.append({"date": cur["date"], "trade_date": cur["date"], "price": h, "fractal_type": "top", "type": "top"})
+        if l_ <= prev_["low"] and l_ <= nxt["low"]:
+            raw.append({"date": cur["date"], "trade_date": cur["date"], "price": l_, "fractal_type": "bottom", "type": "bottom"})
+    raw.sort(key=lambda x: (x["date"], 0 if x.get("type") == "bottom" else 1))
+    out: list[dict] = []
+    for fx in raw:
+        if not out or out[-1].get("type") != fx.get("type"):
+            out.append(fx)
+    return out
+
+
 def build_summary(kline: list[dict], label: str) -> str:
     if not kline:
         return f"【{label}摘要】暂无数据。"
@@ -433,7 +473,16 @@ def build_report_notebook_text(raw: Any) -> str:
 
     if chan:
         lines.append("## 缠论结构")
-        fractal_list = chan.get("fractals") or chan.get("fenxing") or []
+        fractal_list = (
+            chan.get("fractals") or chan.get("fenxing")
+            or chan.get("fractal_list") or chan.get("fractalList")
+            or (chan.get("daily") or {}).get("fractals") or (chan.get("daily") or {}).get("fenxing")
+            or []
+        )
+        if not isinstance(fractal_list, list):
+            fractal_list = []
+        if not fractal_list and len(kline) >= 3:
+            fractal_list = _kline_to_fractals(kline)
         bis = list(chan.get("bis") or chan.get("bi") or [])
         has_valid_bis = any(
             (b.get("start_date") or b.get("start_trade_date") or "").strip()
@@ -444,10 +493,8 @@ def build_report_notebook_text(raw: Any) -> str:
             bis = []
             for i in range(len(fractal_list) - 1):
                 fx, nxt = fractal_list[i], fractal_list[i + 1]
-                start_ts = fx.get("timestamp") or fx.get("date") or fx.get("trade_date") or ""
-                end_ts = nxt.get("timestamp") or nxt.get("date") or nxt.get("trade_date") or ""
-                start_date = start_ts[:10] if len(start_ts) >= 10 else start_ts or "-"
-                end_date = end_ts[:10] if len(end_ts) >= 10 else end_ts or "-"
+                start_date = _fractal_date(fx) or "-"
+                end_date = _fractal_date(nxt) or "-"
                 start_type = fx.get("fractal_type") or fx.get("type") or ""
                 direction = "up" if start_type == "bottom" else "down"
                 p_start = to_num(fx.get("price"))
@@ -467,8 +514,7 @@ def build_report_notebook_text(raw: Any) -> str:
         if fractal_list:
             lines.append("### 分型列表")
             for fx in fractal_list:
-                raw_ts = fx.get("timestamp") or fx.get("date") or fx.get("trade_date") or "-"
-                d = raw_ts[:10] if len(raw_ts) >= 10 else raw_ts
+                d = _fractal_date(fx) or "-"
                 ft = fx.get("fractal_type") or fx.get("type") or "-"
                 t = "顶分型" if ft == "top" else ("底分型" if ft == "bottom" else ft)
                 lines.append(f"- {t}  {d}  价格 {fmt(fx.get('price'))}")

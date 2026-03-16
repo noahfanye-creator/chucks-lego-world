@@ -6,6 +6,25 @@
 
 该 `.md` 文件需由**报告生成管道**在生成 `review_{trade_date}.json` 后一并生成，并放到同一目录（如 `/data/reports/{code}/`），与 `review_latest.json`、`review_2026-03-15.json` 等并列。
 
+---
+
+## MD 命名规则（与 PDF 一致）
+
+与 **stock_report_generator** 的 PDF 命名一致，MD 文件名规则为：
+
+**`代码_月日_A复盘_名称.md`**  
+例：`sz300474_0315_A复盘_景嘉微.md`、`002173_0316_A复盘_创新医疗.md`
+
+- **管道中生成 MD 时请务必加 `--pdf-name`**（Python）或 `--pdf-name`（Node），这样会**额外**写出该命名文件，与 `review_{date}.md`、`review_latest.md` 并存，便于与 PDF 一一对应、给 NotebookLM 使用。
+
+---
+
+## MD 内容规则（已实现）
+
+- **不含 1 分钟 K 线**：MD 中只包含日线、周线、月线、30 分钟、5 分钟，无 1 分钟段落。
+- **各周期 K 线 100 根**：每个周期「最近 K 线」表为最近 100 根（原 20/15 根已改为 100）。
+- **近 100 日行情**：日线「近 N 日行情数据」为近 100 日（原 20 日已改为 100）。
+
 ## 方式一：Python 脚本（适合 DMIT + stock_report_generator.py）
 
 本仓库提供 **Python** 脚本，与 Node 版输出一致，可直接在生成 JSON 后写同目录的 `review_{date}.md` 和 `review_latest.md`：
@@ -58,6 +77,9 @@ python3 /path/to/chuck-s-lego-world/scripts/generate_review_md.py /root/data/rep
 node scripts/generate-review-md.cjs /path/to/review_2026-03-15.json
 # 会在同目录生成 review_2026-03-15.md（报告日期从 JSON 的 report_date 读取）
 
+# 额外生成与 PDF 同名的 MD：代码_月日_A复盘_名称.md
+node scripts/generate-review-md.cjs /path/to/review_2026-03-15.json --pdf-name
+
 # 指定输出路径
 node scripts/generate-review-md.cjs /path/to/review_latest.json -o /path/to/review_2026-03-15.md
 
@@ -74,13 +96,12 @@ node /path/to/chuck-s-lego-world/scripts/generate-review-md.cjs /data/reports/00
 
 ## 方式三：与前端逻辑一致
 
-Markdown 内容与前端「报告详情页」+「Notebook 视图」一致，由 `src/sections/ReportDetail.tsx` 的 `buildReportNotebookText` 定义；Node 端复用在 `scripts/ai-summary-lib.cjs` 的 `buildReportNotebookText`。若你用其他语言重写管道，需按相同结构生成：当日概览、资金与筹码、近20日行情、日线技术指标、六周期摘要与 K 线、缠论结构、操作策略等。
+Markdown 内容与前端「报告详情页」+「Notebook 视图」一致，由 `src/sections/ReportDetail.tsx` 的 `buildReportNotebookText` 定义；Node 端复用在 `scripts/ai-summary-lib.cjs` 的 `buildReportNotebookText`。若你用其他语言重写管道，需按相同结构生成：当日概览、资金与筹码、**近 100 日行情**、日线技术指标、**五周期**（日/周/月/30 分/5 分，**不含 1 分钟**）摘要与 **各 100 根 K 线**、缠论结构、操作策略等。
 
 ## 文件命名约定
 
 - `review_latest.json` / `review_latest.md`：始终为「最近一次」报告，便于固定 URL。
 - `review_2026-03-15.json` / `review_2026-03-15.md`：按交易日的报告，内容在生成时与当日 `review_latest` 一致。
+- **`代码_月日_A复盘_名称.md`**（加 `--pdf-name` 时）：与 PDF 同名规则，例 `sz300474_0315_A复盘_景嘉微.md`。
 
-NotebookLM 建议使用**带日期的 URL**（如 `review_2026-03-15.md`），以便区分不同日期的报告。
-
-**MD 与 PDF 同名**：脚本支持 `--pdf-name`，会额外写出与 **stock_report_generator** 中 `get_review_report_filename` 相同规则的文件名：`代码_月日_A复盘_名称.md`（如 `sz300474_0315_A复盘_景嘉微.md`），与 PDF 的 `代码_月日_A复盘_名称.pdf` 一一对应，便于一起给 NotebookLM。
+NotebookLM 建议使用**带日期的 URL**（如 `review_2026-03-15.md`）或与 PDF 同名的 MD 文件。

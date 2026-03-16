@@ -1,44 +1,93 @@
 # 报告列表 index.json 更新说明
 
-报告中心页面（`/reports`）依赖 **`/data/reports/index.json`** 显示报告列表。该文件必须由报告生成管道在**每次生成或更新报告后**更新，且**只应通过下面这一种方式**更新，避免被写空或写坏。
+报告中心页面（`/reports`）依赖 **`/data/reports/index.json`** 显示报告列表。
+
+**→ 管道里要删什么、末尾加什么，按步骤做：见 [PIPELINE-INTEGRATION.md](PIPELINE-INTEGRATION.md)。**  
+**→ 生成报告后列表又空了？见 [排查报告列表为空.md](排查报告列表为空.md)。**
 
 ---
 
-## 唯一推荐方式：全量扫描脚本
+## 为什么会出现「报告列表为空」？
 
-在 DMIT 服务器上，每次生成完各股票的 `review_*.json`（及 html/md 等）之后：
+**每次生成报告后列表就空，说明管道里在「写」或「覆盖」index.json。**  
+常见错误做法：
 
-1. **不要**在管道里自己拼 JSON 或直接写 `index.json`（容易覆盖成空或漏掉已有报告）。
-2. **只**执行本仓库提供的全量扫描脚本，用当前磁盘上所有 `*/review_latest.json` 重新生成整份 index。
+- 生成报告时**先清空再追加**写 index，结果只写了一条或写失败变成空
+- 管道里**自己拼 JSON 数组**写 index.json，漏写、格式错或中途出错导致文件为空/损坏
+- 生成前**删除或覆盖** index.json
 
-### 执行方式
+**正确做法：管道内不要直接写 index.json。** 只在**所有** `review_*.json`（以及 html/md 等）都写完后，**唯一**通过下面两种方式之一更新 index。
+
+---
+
+## 唯一推荐方式：全量扫描后写 index
+
+在每次生成/更新完各股票的 `review_latest.json` 之后，用**全量扫描**重新生成整份 index，不要用「当前这条报告」去追加或覆盖 index。
+
+### 方式一：Bash 脚本（服务器上有 jq 时）
 
 ```bash
-# 在报告根目录所在服务器上执行（默认 /root/data/reports）
+# 在报告根目录执行（默认 /root/data/reports）
 bash /path/to/chuck-s-lego-world/scripts/server-build-report-index.sh
 
-# 若报告目录不在默认路径，可指定环境变量
+# 报告目录不在默认路径时
 REPORTS_ROOT=/var/www/data/reports bash /path/to/scripts/server-build-report-index.sh
 ```
 
-脚本会：
+### 方式二：Python 脚本（适合从 stock_report_generator 等管道调用）
 
-- 扫描 `REPORTS_ROOT` 下每个子目录（如 `002173/`、`688630/`），读取该目录下的 `review_latest.json`；
-- 生成合法的 JSON 数组，先写入 `index.json.tmp`；
-- **仅当**新内容非空（至少有一条记录）时，才用 `mv` 覆盖 `index.json`，否则不覆盖并 `exit 1`，避免误把已有列表清空。
+```bash
+# 命令行
+python3 /path/to/chuck-s-lego-world/scripts/build_report_index.py
+python3 /path/to/chuck-s-lego-world/scripts/build_report_index.py /root/data/reports
+```
 
-### 列表展示逻辑
+或在 **Python 管道末尾**调用（推荐）：
 
-- **同一天多只股票**：每个 code 一条记录，前端按 `trade_date` 分组，同一日期下会显示多张卡片（如 688630、300442、002173 各一张）。
-- **同一天同一只股票多次生成**：当前为覆盖写（同一目录只保留最后一次），列表只显示该股票一张卡片，对应最后一次生成。
+```python
+# 在 stock_report_generator 等脚本里，写完 review_*.json 和 review_*.md 之后：
+import subprocess
+import sys
+
+# 报告根目录，需与当前写入路径一致
+REPORTS_ROOT = "/root/data/reports"  # 或你的实际路径
+script = "/path/to/chuck-s-lego-world/scripts/build_report_index.py"
+subprocess.run([sys.executable, script, REPORTS_ROOT], check=False)
+```
+
+或直接调用函数（同一项目内）：
+
+```python
+from build_report_index import build_report_index
+build_report_index("/root/data/reports")
+```
+
+---
+
+## 管道集成检查清单
+
+1. **删除**管道里所有「写 `/data/reports/index.json`」或「更新 index」的自有逻辑（不要自己拼 JSON、不要清空再追加）。
+2. **保留**唯一一步：在**所有**报告文件（含 `review_latest.json`）写完后，执行上述 **Bash 或 Python** 脚本一次。
+3. 确保脚本有权限读 `REPORTS_ROOT` 下各子目录的 `review_latest.json`，且报告根目录路径与脚本参数/环境变量一致。
+
+---
+
+## 脚本行为说明
+
+- 扫描 `REPORTS_ROOT` 下每个**子目录**（如 `002173/`、`688630/`），读取该目录下的 `review_latest.json`。
+- 生成合法 JSON 数组，先写 `index.json.tmp`；**仅当**新内容非空（至少一条记录）时才替换 `index.json`，否则不覆盖，避免把已有列表清空。
+- **同一天多只股票**：每个 code 一条记录，前端按 `trade_date` 分组显示。
+- **同一天同一只股票多次生成**：同一目录覆盖写，列表只显示该股票一张卡片（最后一次）。
 
 ---
 
 ## 若 index 已坏如何恢复
 
-在服务器上直接跑一次上述脚本即可从当前磁盘上的 `*/review_latest.json` 重建 index，无需数据库或手工编辑。
+在服务器上执行一次上述脚本即可从当前磁盘上的 `*/review_latest.json` 重建 index：
 
 ```bash
-cd /root/data/reports   # 或你的 REPORTS_ROOT
-bash /path/to/scripts/server-build-report-index.sh
+cd /root/data/reports
+python3 /path/to/chuck-s-lego-world/scripts/build_report_index.py
+# 或
+bash /path/to/chuck-s-lego-world/scripts/server-build-report-index.sh
 ```

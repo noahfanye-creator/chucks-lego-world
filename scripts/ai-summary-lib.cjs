@@ -64,6 +64,34 @@ function extractPayload(json) {
   return r;
 }
 
+function getFractalDate(fx) {
+  const v = fx.timestamp ?? fx.date ?? fx.trade_date;
+  if (v == null) return '';
+  if (typeof v === 'number') {
+    const d = new Date(v > 1e12 ? v : v * 1000);
+    return Number.isFinite(d.getTime()) ? d.toISOString().slice(0, 10) : String(v);
+  }
+  const s = String(v).trim();
+  return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
+function klineToFractals(kline) {
+  const out = [];
+  for (let i = 1; i < kline.length - 1; i++) {
+    const cur = kline[i], prev = kline[i - 1], next = kline[i + 1];
+    if (cur.high >= prev.high && cur.high >= next.high)
+      out.push({ date: cur.date, trade_date: cur.date, price: cur.high, fractal_type: 'top', type: 'top' });
+    if (cur.low <= prev.low && cur.low <= next.low)
+      out.push({ date: cur.date, trade_date: cur.date, price: cur.low, fractal_type: 'bottom', type: 'bottom' });
+  }
+  out.sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.type === 'top' ? -1 : 1) * ((a.price || 0) - (b.price || 0)));
+  const filtered = [];
+  for (const fx of out) {
+    if (filtered.length === 0 || filtered[filtered.length - 1].type !== fx.type) filtered.push(fx);
+  }
+  return filtered;
+}
+
 function calcMA(closes, len) {
   return closes.map((_, i) => {
     if (i < len - 1) return null;
@@ -432,7 +460,12 @@ function buildReportNotebookText(raw) {
 
   if (chan) {
     lines.push('## 缠论结构');
-    const fractalList = chan.fractals ?? chan.fenxing ?? [];
+    let fractalList = chan.fractals ?? chan.fenxing ?? chan.fractal_list ?? chan.fractalList ?? [];
+    const kline = klineMap.daily || [];
+    if ((!fractalList || fractalList.length === 0) && kline.length >= 3) {
+      fractalList = klineToFractals(kline);
+    }
+    if (!Array.isArray(fractalList)) fractalList = [];
     let bis = chan.bis ?? chan.bi ?? [];
     const hasValidBis = bis.some((b) => {
       const sd = b.start_date ?? b.start_trade_date ?? '';
@@ -442,10 +475,8 @@ function buildReportNotebookText(raw) {
     if (!hasValidBis && fractalList.length >= 2) {
       bis = fractalList.slice(0, -1).map((fx, i) => {
         const next = fractalList[i + 1];
-        const startTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '';
-        const endTs = next.timestamp ?? next.date ?? next.trade_date ?? '';
-        const startDate = startTs.length >= 10 ? startTs.slice(0, 10) : startTs || '-';
-        const endDate = endTs.length >= 10 ? endTs.slice(0, 10) : endTs || '-';
+        const startDate = getFractalDate(fx) || '-';
+        const endDate = getFractalDate(next) || '-';
         const startType = fx.fractal_type ?? fx.type ?? '';
         const direction = startType === 'bottom' ? 'up' : 'down';
         const pStart = toNum(fx.price);
@@ -462,8 +493,7 @@ function buildReportNotebookText(raw) {
     if (fractalList.length > 0) {
       lines.push('### 分型列表');
       fractalList.forEach((fx) => {
-        const rawTs = fx.timestamp ?? fx.date ?? fx.trade_date ?? '-';
-        const d = rawTs.length >= 10 ? rawTs.slice(0, 10) : rawTs;
+        const d = getFractalDate(fx) || '-';
         const ft = fx.fractal_type ?? fx.type ?? '-';
         const t = ft === 'top' ? '顶分型' : ft === 'bottom' ? '底分型' : ft;
         lines.push(`- ${t}  ${d}  价格 ${fmt(fx.price)}`);
