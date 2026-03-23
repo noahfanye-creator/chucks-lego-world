@@ -648,18 +648,6 @@ const ICON = {
 // ═══════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════
-const TEST_ROSTER_NAMES = [
-  '王萍', '王磊', '孟良', '王宗伟', '叶利天', '王崴', '杨文彬', '石秀杰', '谢微微', '姚小姚',
-  '黄佳俊', '李阳', '王东', '宋丽英', '鲍晓静', '李杰然', '柴金柱', '宋丽丽', '宋宁', '马新',
-  '王晓东', '吕辉', '王立强', '刘培', '陈柯', '曹雄', '田建江', '米海燕', '王伦', '张琦龙'
-];
-
-function applyTestRosterIfEmpty() {
-  if (state.started) return;
-  if (state.players && state.players.length > 0) return;
-  state.players = TEST_ROSTER_NAMES.map((name, i) => ({ id: i + 1, name, retired: false }));
-}
-
 let state = {
   tournamentName: '飞扬匹克内部循环赛',
   date: new Date().toISOString().slice(0,10),
@@ -803,7 +791,6 @@ async function loadState() {
     const rebuilt = rebuildPartnerHistoryFromRounds();
     state.partnerHistory = Object.keys(rebuilt).length ? rebuilt : (data.partnerHistory || ph || {});
     normalizeMatchScores();
-    applyTestRosterIfEmpty();
   } catch(e) {
     console.error('加载数据失败:', e);
   }
@@ -2061,7 +2048,6 @@ async function init() {
   await loadState();
   loadFromHash();
   await restoreAdminFromSession();
-  applyTestRosterIfEmpty();
   if (state.players.length) nextId = Math.max(...state.players.map(p=>p.id), 0) + 1;
   render();
 
