@@ -55,10 +55,16 @@ jobs:
         run: |
           scp -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no -r dist/* root@154.17.3.182:/root/projects/chuck/
 
+      - name: Deploy tournament (tournament.chuckfan.com)
+        run: |
+          ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
+            "mkdir -p /root/projects/tournament"
+          scp -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no -r tournament/* root@154.17.3.182:/root/projects/tournament/
+
       - name: Reload Nginx
         run: |
           ssh -i "$HOME/.ssh/deploy_key" -o StrictHostKeyChecking=no root@154.17.3.182 \
-            "chmod -R 755 /root/projects/chuck && (nginx -t && systemctl reload nginx || true)"
+            "chmod -R 755 /root/projects/chuck /root/projects/tournament && (nginx -t && systemctl reload nginx || true)"
 
       - name: Verify deployed index on server
         run: |

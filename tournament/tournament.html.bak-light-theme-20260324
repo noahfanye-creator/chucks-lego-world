@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>飞扬匹克内部循环赛</title>
+<meta property="og:title" content="飞扬匹克内部循环赛">
+<meta property="og:description" content="瑞士制双打积分循环赛 · 实时对阵与排名">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tournament.chuckfan.com/">
+<meta property="og:image" content="https://tournament.chuckfan.com/share.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="飞扬匹克内部循环赛">
+<meta name="twitter:description" content="瑞士制双打积分循环赛 · 实时对阵与排名">
+<meta name="twitter:image" content="https://tournament.chuckfan.com/share.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+<style>
+:root {
+  --bg: #0F2740;
+  --bg2: #153252;
+  --bg3: #1A3D63;
+  --card: rgba(255,255,255,0.06);
+  --card-border: rgba(255,255,255,0.09);
+  --ice: #5AC8FA;
+  --ice-dim: rgba(90,200,250,0.15);
+  --green: #30D158;
+  --green-dim: rgba(48,209,88,0.12);
+  --red: #FF453A;
+  --orange: #FF9F0A;
+  --gold: #FFD60A;
+  --silver: #D1D1D6;
+  --bronze: #D4A76A;
+  --white: #FFFFFF;
+  --t1: rgba(255,255,255,0.92);
+  --t2: rgba(255,255,255,0.55);
+  --t3: rgba(255,255,255,0.3);
+  --sep: rgba(255,255,255,0.06);
+  --r: 14px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+body {
+  font-family: -apple-system, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
+  background: var(--bg);
+  color: var(--t1);
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Navbar ── */
+.navbar {
+  position: sticky; top:0; z-index:100;
+  padding-top: var(--safe-top);
+  background: transparent;
+  transition: background 0.3s;
+}
+.navbar.scrolled {
+  background: rgba(15,39,64,0.85);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: 0.5px solid var(--sep);
+}
+.navbar.scrolled .nav-large { opacity:0; height:0; padding:0 20px; overflow:hidden; }
+.navbar.scrolled .nav-small { opacity:1; }
+.nav-top { height:44px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; }
+.nav-small { font-size:17px; font-weight:600; opacity:0; transition:opacity 0.25s; color:var(--t1); position:absolute; left:50%; transform:translateX(-50%); }
+.nav-admin-btn {
+  font-size:14px; color:var(--ice); background:none; border:none; cursor:pointer;
+  font-weight:500; margin-left:auto;
+}
+.nav-large { 
+  padding: 24px 20px 20px; 
+  transition: all 0.25s; 
+  text-align: center;
+  background: linear-gradient(180deg, #1C4B7A 0%, #153252 60%, #0F2740 100%);
+}
+.nav-logo { 
+  height: 64px; 
+  margin-bottom: 12px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.nav-large h1 { 
+  font-size: 28px; 
+  font-weight: 700; 
+  letter-spacing: 0.3px; 
+  color: var(--t1);
+  white-space: nowrap;
+}
+.nav-large .sub { font-size:14px; color:var(--t2); margin-top:3px; }
+@media (max-width: 420px) {
+  .nav-large h1 { font-size: 21px; }
+  .nav-large .sub { font-size: 12px; }
+  .nav-logo { height: 52px; margin-bottom: 8px; }
+}
+
+/* ── Round pill ── */
+.round-pill {
+  margin: 10px 20px 0;
+  padding: 13px 16px;
+  background: linear-gradient(135deg, rgba(90,200,250,0.06) 0%, rgba(48,209,88,0.04) 100%);
+  border: 0.5px solid rgba(90,200,250,0.12);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.rp-left { display:flex; align-items:center; gap:10px; }
+.live-dot { width:8px; height:8px; border-radius:50%; background:var(--green); animation:pulse 2s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.35;transform:scale(0.8)} }
+.rp-label { font-size:16px; font-weight:600; }
+.rp-meta { font-size:13px; color:var(--t3); }
+
+.round-scroller {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.round-scroller::-webkit-scrollbar { display: none; }
+.round-scroller button { flex-shrink: 0; }
+
+/* ── Segmented control ── */
+.seg-wrap { padding:14px 20px 4px; }
+.seg { display:flex; background:rgba(118,118,128,0.24); border-radius:9px; padding:2px; position:relative; }
+.seg-btn {
+  flex:1; text-align:center; padding:7px 0;
+  font-size:13px; font-weight:500; color:var(--t2);
+  border:none; background:none; cursor:pointer;
+  position:relative; z-index:2; transition:color 0.2s;
+}
+.seg-btn.on { color: #fff; font-weight: 600; }
+.seg-slider {
+  position:absolute; top:2px; left:2px;
+  height:calc(100% - 4px);
+  background: rgba(90,200,250,0.15);
+  border-radius:7px;
+  transition:transform 0.3s cubic-bezier(0.25,0.1,0.25,1), width 0.3s cubic-bezier(0.25,0.1,0.25,1);
+  z-index:1;
+}
+
+/* ── Panels ── */
+.panel { display:none; padding:0 20px 100px; }
+.panel.on { display:block; animation:fadeUp 0.3s ease-out; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Section ── */
+.sec { font-size:12px; font-weight:600; color:var(--t3); letter-spacing:1.5px; text-transform:uppercase; padding:20px 0 8px; }
+
+/* ── Cards ── */
+.card {
+  background: rgba(255,255,255,0.03);
+  border: 0.5px solid rgba(255,255,255,0.08);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* ── Match card ── */
+.match { padding:16px; }
+.match + .match { border-top:0.5px solid var(--sep); }
+.match-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.match-id { 
+  font-size:13px; color:var(--t3); font-weight:500;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.tag { 
+  font-size:11px; font-weight:600; padding:3px 10px; border-radius:100px; letter-spacing:0.3px;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.tag-done { background:var(--green-dim); color:var(--green); }
+.tag-live { background:var(--ice-dim); color:var(--ice); }
+.tag-wait { background:rgba(255,255,255,0.06); color:var(--t3); }
+.match-body { display:flex; align-items:center; }
+.match-team { flex:1; text-align:center; }
+.match-names { font-size:16px; font-weight:500; line-height:1.5; }
+.match-names .p2 { font-size:14px; color:var(--t3); font-weight:400; }
+.match-score { font-size:24px; font-weight:700; margin-top:4px; letter-spacing:-0.5px; }
+.match-team.W .match-score { color: #4ADE80; }
+.match-team.W .match-names { font-weight: 600; }
+.match-team.L .match-score { color:var(--t3); }
+.match-team.L .match-names { color:var(--t3); }
+.match-team.L .p2 { color:rgba(255,255,255,0.15); }
+.match-team.P .match-score { color:rgba(255,255,255,0.15); }
+.match-vs { width:40px; flex-shrink:0; text-align:center; }
+.match-vs span {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:32px; height:32px; border-radius:50%;
+  background:rgba(255,255,255,0.04); border:0.5px solid var(--sep);
+  font-size:11px; font-weight:700; color:var(--t3);
+}
+
+/* ── Admin: result buttons ── */
+.match-actions { display:flex; gap:8px; margin-top:12px; }
+.result-btn {
+  flex:1; padding:10px; border:none; border-radius:10px;
+  font-size:14px; font-weight:600; cursor:pointer;
+  transition: all 0.15s;
+}
+.result-btn:active { transform:scale(0.97); }
+.result-btn.a-win { background:var(--ice-dim); color:var(--ice); }
+.result-btn.b-win { background:var(--ice-dim); color:var(--ice); }
+.result-btn.undo { background:rgba(255,69,58,0.1); color:var(--red); }
+.result-btn.selected { background:var(--ice); color:var(--bg); }
+
+.score-input-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+.score-input {
+  width: 60px;
+  padding: 10px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 600;
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: #fff;
+  outline: none;
+  font-family: inherit;
+  -moz-appearance: textfield;
+}
+.score-input::-webkit-outer-spin-button,
+.score-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.score-input:focus {
+  border-color: #5AC8FA;
+}
+.score-divider {
+  font-size: 20px;
+  font-weight: 700;
+  color: rgba(255,255,255,0.3);
+  padding: 0 6px;
+}
+
+/* ── Ranking ── */
+.rank-item { display:flex; align-items:center; padding:13px 16px; }
+.rank-item + .rank-item { border-top:0.5px solid var(--sep); }
+.rank-pos {
+  width:30px; height:30px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; margin-right:14px; flex-shrink:0;
+}
+.rank-1 { background:var(--gold); color:#7A5A00; }
+.rank-2 { background:var(--silver); color:#3A3A3C; }
+.rank-3 { background:var(--bronze); color:#4A2800; }
+.rank-x { background:rgba(255,255,255,0.06); color:var(--t3); }
+.rank-info { flex:1; min-width:0; }
+.rank-name { font-size:17px; font-weight:500; }
+.rank-sub { font-size:13px; color:var(--t3); margin-top:1px; }
+.rank-pts { text-align:right; flex-shrink:0; }
+.rank-pts b { font-size:22px; font-weight:700; }
+.rank-pts span { font-size:12px; color:var(--t3); margin-left:2px; }
+
+/* ── Players ── */
+.player-grid { display:flex; flex-wrap:wrap; gap:8px; padding:16px; }
+.player-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  background:rgba(255,255,255,0.06); padding:8px 14px; border-radius:100px;
+  font-size:14px; font-weight:500;
+}
+.player-chip .sc { font-size:12px; color:var(--t3); font-weight:400; }
+.player-chip .del {
+  width:18px; height:18px; border-radius:50%; background:rgba(255,69,58,0.15);
+  color:var(--red); font-size:12px; font-weight:700;
+  display:inline-flex; align-items:center; justify-content:center;
+  cursor:pointer; border:none; margin-left:2px;
+}
+
+/* ── Rules page ── */
+.rules-content { padding:16px; line-height:1.8; font-size:15px; color:var(--t2); }
+.rules-content h3 { font-size:17px; font-weight:600; color:var(--t1); margin:16px 0 8px; }
+.rules-content h3:first-child { margin-top:0; }
+.rules-content p { margin-bottom:8px; }
+
+/* ── Admin panel ── */
+.admin-section { margin:16px 20px; }
+.admin-card {
+  background:var(--card); border:0.5px solid var(--card-border);
+  border-radius:var(--r); padding:20px; margin-bottom:12px;
+}
+.admin-title { font-size:18px; font-weight:600; margin-bottom:16px; }
+.input-row { display:flex; gap:8px; margin-bottom:12px; }
+.text-input {
+  flex:1; padding:12px 14px;
+  background:rgba(255,255,255,0.06); border:0.5px solid var(--card-border);
+  border-radius:10px; color:var(--t1); font-size:15px;
+  outline:none; transition:border-color 0.2s;
+  font-family:inherit;
+}
+.text-input:focus { border-color:var(--ice); }
+.text-input::placeholder { color:var(--t3); }
+.btn {
+  padding:12px 20px; border:none; border-radius:10px;
+  font-size:15px; font-weight:600; cursor:pointer;
+  transition:all 0.15s; font-family:inherit;
+}
+.btn:active { transform:scale(0.97); }
+.btn-primary { background:var(--ice); color:var(--bg); }
+.btn-danger { background:rgba(255,69,58,0.12); color:var(--red); }
+.btn-secondary { background:rgba(255,255,255,0.08); color:var(--t1); }
+.btn-success { background:var(--green-dim); color:var(--green); }
+.btn-block { width:100%; }
+.btn-lg { padding:16px 24px; font-size:17px; }
+select.text-input { appearance:none; }
+.form-label { font-size:13px; color:var(--t3); margin-bottom:6px; display:block; }
+.form-group { margin-bottom:16px; }
+textarea.text-input { resize:vertical; min-height:80px; }
+
+/* ── Login modal ── */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  display:none; align-items:center; justify-content:center;
+  z-index:200; padding:20px;
+  -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
+}
+.modal-overlay.on { display:flex; }
+.modal {
+  background: linear-gradient(180deg, #1A3D63 0%, #153252 100%);
+  border: 0.5px solid rgba(90,200,250,0.1);
+  border-radius: 16px;
+  padding: 28px 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.modal h2 { font-size:22px; font-weight:700; margin-bottom:6px; }
+.modal .sub { font-size:14px; color:var(--t3); margin-bottom:20px; }
+.modal .err { font-size:13px; color:var(--red); margin-top:8px; display:none; }
+
+/* ── Toast ── */
+.toast {
+  position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--bg3); border:0.5px solid var(--card-border);
+  padding:12px 24px; border-radius:100px;
+  font-size:14px; font-weight:500; color:var(--t1);
+  z-index:300; opacity:0; transition:all 0.3s;
+  pointer-events:none; white-space:nowrap;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ── Print styles ── */
+@media print {
+  body { background:#fff !important; color:#000 !important; }
+  .navbar, .seg-wrap, .round-pill, .match-actions, .admin-section,
+  .nav-admin-btn, .toast, .modal-overlay, .no-print { display:none !important; }
+  .panel { display:block !important; padding:0 !important; }
+  .panel:not(.print-target) { display:none !important; }
+  .card { background:#fff !important; border:1px solid #ddd !important; }
+  .match-names, .rank-name { color:#000 !important; }
+  .match-names .p2 { color:#666 !important; }
+  .match-score { color:#000 !important; }
+  .match-team.W .match-score { color:#0D2137 !important; }
+  .match-team.L .match-score { color:#999 !important; }
+  .rank-sub, .rp-meta, .match-id { color:#666 !important; }
+  .sec { color:#333 !important; }
+  .tag { border:1px solid #ddd !important; background:#f5f5f5 !important; color:#333 !important; }
+  .print-header {
+    display:flex !important; align-items:center; justify-content:space-between;
+    padding-bottom:12px; border-bottom:2.5px solid #0D2137; margin-bottom:16px;
+  }
+  .print-header .ph-title { font-size:20px; font-weight:700; color:#0D2137; }
+  .print-header .ph-sub { font-size:12px; color:#666; }
+  .print-header .ph-logo { height:40px; }
+  .print-footer {
+    display:flex !important; justify-content:space-between;
+    margin-top:16px; padding-top:8px; border-top:1px solid #ddd;
+    font-size:11px; color:#999;
+  }
+}
+.print-header, .print-footer { display:none; }
+
+/* ── Responsive ── */
+@media (min-width:768px) {
+  .content-wrap { max-width:680px; margin:0 auto; }
+}
+@media (min-width:1024px) {
+  .content-wrap { max-width:800px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<div class="navbar" id="navbar">
+  <div class="nav-top">
+    <span class="nav-small">飞扬匹克内部循环赛</span>
+    <button class="nav-admin-btn" id="adminToggle" onclick="toggleAdmin()">管理</button>
+  </div>
+  <div class="nav-large" style="text-align:center">
+    <img class="nav-logo" id="navLogo" alt="飞扬匹克球俱乐部">
+    <h1>飞扬匹克内部循环赛</h1>
+    <div class="sub" id="navSub">瑞士制双打积分循环赛 · 2026</div>
+  </div>
+</div>
+
+<div class="content-wrap">
+  <!-- Round pill -->
+  <div class="round-pill" id="roundPill" style="display:none">
+    <div class="rp-left">
+      <div class="live-dot"></div>
+      <span class="rp-label" id="roundLabel">第 1 轮</span>
+    </div>
+    <span class="rp-meta" id="roundMeta"></span>
+  </div>
+
+  <!-- Segment control -->
+  <div class="seg-wrap">
+    <div class="seg" id="segCtrl">
+      <div class="seg-slider" id="segSlider"></div>
+    </div>
+  </div>
+
+  <!-- Panels -->
+  <div id="panelContainer"></div>
+
+  <!-- Admin sections -->
+  <div class="admin-section" id="adminArea" style="display:none"></div>
+</div>
+
+<!-- Login modal -->
+<div class="modal-overlay" id="loginModal">
+  <div class="modal">
+    <h2>管理员登录</h2>
+    <div class="sub">输入密码进入管理模式</div>
+    <input type="password" class="text-input" id="pwdInput" placeholder="请输入管理密码" style="width:100%" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="err" id="loginErr">密码错误</div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeLogin()">取消</button>
+      <button class="btn btn-primary" style="flex:1" onclick="doLogin()">登录</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// SVG ICONS
+// ═══════════════════════════════════════
+const ICON = {
+  ball: '<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.5"/><circle cx="11" cy="12" r="1.5" fill="currentColor"/><circle cx="21" cy="12" r="1.5" fill="currentColor"/><circle cx="16" cy="18" r="1.5" fill="currentColor"/><circle cx="11" cy="22" r="1.5" fill="currentColor"/><circle cx="21" cy="22" r="1.5" fill="currentColor"/></svg>',
+  podium: '<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px"><rect x="3" y="18" width="8" height="10" rx="1" fill="currentColor" opacity="0.5"/><rect x="12" y="10" width="8" height="18" rx="1" fill="currentColor" opacity="0.8"/><rect x="21" y="14" width="8" height="14" rx="1" fill="currentColor" opacity="0.6"/></svg>',
+  trophy: '<svg width="16" height="16" viewBox="0 0 32 32" style="vertical-align:-2px"><path d="M10 6h12v2h4v4c0 2-2 4-4 4h-1c-1 3-3 4-5 5v3h4v2H12v-2h4v-3c-2-1-4-2-5-5H10c-2 0-4-2-4-4V8h4V6z" fill="currentColor"/></svg>',
+  fire: '<svg width="12" height="12" viewBox="0 0 32 32" style="vertical-align:-1px"><path d="M16 4c-2 6-8 8-8 16a8 8 0 0016 0c0-8-6-10-8-16z" fill="currentColor"/></svg>',
+  court: '<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px"><rect x="4" y="8" width="24" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><line x1="16" y1="8" x2="16" y2="24" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 2"/></svg>',
+  check: '<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:-2px"><path d="M8 16l6 6 10-12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+};
+
+// ═══════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════
+const TEST_ROSTER_NAMES = [
+  '王萍', '王磊', '孟良', '王宗伟', '叶利天', '王崴', '杨文彬', '石秀杰', '谢微微', '姚小姚',
+  '黄佳俊', '李阳', '王东', '宋丽英', '鲍晓静', '李杰然', '柴金柱', '宋丽丽', '宋宁', '马新',
+  '王晓东', '吕辉', '王立强', '刘培', '陈柯', '曹雄', '田建江', '米海燕', '王伦', '张琦龙'
+];
+
+function applyTestRosterIfEmpty() {
+  if (state.started) return;
+  if (state.players && state.players.length > 0) return;
+  state.players = TEST_ROSTER_NAMES.map((name, i) => ({ id: i + 1, name, retired: false }));
+}
+
+let state = {
+  tournamentName: '飞扬匹克内部循环赛',
+  date: new Date().toISOString().slice(0,10),
+  totalRounds: 8,
+  players: [],
+  rounds: [],
+  currentRound: 0,
+  started: false,
+  isAdmin: false,
+  partnerHistory: {},  // "A-B": true
+};
+
+let viewingRoundIdx = null;
+const API_BASE = '/api';
+let adminPassword = '';
+
+function getStateHash() {
+  const key = JSON.stringify({
+    players: state.players,
+    rounds: state.rounds,
+    currentRound: state.currentRound,
+    started: state.started,
+    tournamentName: state.tournamentName
+  });
+  let hash = 0;
+  for (let i = 0; i < key.length; i++) {
+    const chr = key.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  return hash.toString();
+}
+
+function generateShareLink() {
+  if (typeof LZString === 'undefined') {
+    showToast('分享功能加载失败，请检查网络');
+    return;
+  }
+  const shareState = {
+    tournamentName: state.tournamentName,
+    date: state.date,
+    totalRounds: state.totalRounds,
+    players: state.players,
+    rounds: state.rounds,
+    currentRound: state.currentRound,
+    started: state.started
+  };
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(shareState));
+  const url = window.location.origin + window.location.pathname + '#v=' + compressed;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('分享链接已复制，请发送到微信群');
+    }).catch(() => {
+      prompt('复制此链接发送给参赛者：', url);
+    });
+  } else {
+    prompt('复制此链接发送给参赛者：', url);
+  }
+}
+
+function loadFromHash() {
+  const hash = window.location.hash;
+  if (!hash.startsWith('#v=') || typeof LZString === 'undefined') return;
+  try {
+    const compressed = hash.substring(3);
+    const json = LZString.decompressFromEncodedURIComponent(compressed);
+    if (!json) throw new Error('decompress failed');
+    const shareState = JSON.parse(json);
+    const wasAdmin = state.isAdmin;
+    Object.assign(state, shareState);
+    state.isAdmin = wasAdmin;
+    state.partnerHistory = shareState.partnerHistory && typeof shareState.partnerHistory === 'object'
+      ? shareState.partnerHistory : {};
+    normalizeMatchScores();
+  } catch (e) {
+    console.error('Failed to load shared state:', e);
+  }
+}
+
+function viewRound(i) {
+  viewingRoundIdx = i;
+  render();
+}
+
+async function renamePlayer() {
+  const oldEl = document.getElementById('oldNameInput');
+  const newEl = document.getElementById('newNameInput');
+  if (!oldEl || !newEl) return;
+  const oldName = oldEl.value.trim();
+  const newName = newEl.value.trim();
+  if (!oldName || !newName) { showToast('请填写原姓名和新姓名'); return; }
+  const p = state.players.find(x => x.name === oldName && !x.retired);
+  if (!p) { showToast('未找到该选手'); return; }
+  if (state.players.some(x => x.name === newName && !x.retired && x.id !== p.id)) { showToast('新姓名已存在'); return; }
+  p.name = newName;
+  oldEl.value = '';
+  newEl.value = '';
+  await saveState();
+  render();
+  showToast(oldName + ' → ' + newName);
+}
+
+function normalizeMatchScores() {
+  if (!Array.isArray(state.rounds)) return;
+  state.rounds.forEach(r => {
+    if (!Array.isArray(r.matches)) return;
+    r.matches.forEach(m => {
+      if (m.scoreA === undefined) m.scoreA = null;
+      if (m.scoreB === undefined) m.scoreB = null;
+    });
+  });
+}
+
+function rebuildPartnerHistoryFromRounds() {
+  const rebuilt = {};
+  if (!Array.isArray(state.rounds)) return rebuilt;
+  state.rounds.forEach(r => {
+    if (!Array.isArray(r.matches)) return;
+    r.matches.forEach(m => {
+      if (Array.isArray(m.teamA) && m.teamA.length === 2) {
+        rebuilt[partnerKey(m.teamA[0], m.teamA[1])] = true;
+      }
+      if (Array.isArray(m.teamB) && m.teamB.length === 2) {
+        rebuilt[partnerKey(m.teamB[0], m.teamB[1])] = true;
+      }
+    });
+  });
+  return rebuilt;
+}
+
+async function loadState() {
+  try {
+    const res = await fetch(API_BASE + '/state');
+    if (!res.ok) return;
+    const data = await res.json();
+    const wasAdmin = state.isAdmin;
+    const ph = state.partnerHistory || {};
+    Object.assign(state, data);
+    state.isAdmin = wasAdmin;
+    const rebuilt = rebuildPartnerHistoryFromRounds();
+    state.partnerHistory = Object.keys(rebuilt).length ? rebuilt : (data.partnerHistory || ph || {});
+    normalizeMatchScores();
+    applyTestRosterIfEmpty();
+  } catch(e) {
+    console.error('加载数据失败:', e);
+  }
+}
+
+function getPersistedState() {
+  return {
+    tournamentName: state.tournamentName,
+    date: state.date,
+    totalRounds: state.totalRounds,
+    players: state.players,
+    rounds: state.rounds,
+    currentRound: state.currentRound,
+    started: state.started,
+    partnerHistory: state.partnerHistory || {}
+  };
+}
+
+async function saveState() {
+  if (!state.isAdmin) return;
+  try {
+    const res = await fetch(API_BASE + '/state', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Admin-Password': adminPassword
+      },
+      body: JSON.stringify(getPersistedState())
+    });
+    if (!res.ok) showToast('保存失败，请检查网络');
+  } catch(e) {
+    console.error('保存数据失败:', e);
+    showToast('保存失败，请检查网络');
+  }
+}
+
+// ═══════════════════════════════════════
+// SWISS PAIRING ALGORITHM
+// ═══════════════════════════════════════
+function getPlayerScore(pid) {
+  let score = 0;
+  state.rounds.forEach(r => {
+    r.matches.forEach(m => {
+      if (m.result === 'A' && (m.teamA[0]===pid||m.teamA[1]===pid)) score+=2;
+      if (m.result === 'B' && (m.teamB[0]===pid||m.teamB[1]===pid)) score+=2;
+    });
+    if (r.byes && r.byes.includes(pid)) score+=2;
+  });
+  return score;
+}
+
+function getOpponentScoreSum(pid) {
+  let sum = 0;
+  state.rounds.forEach(r => {
+    r.matches.forEach(m => {
+      let opponents = [];
+      if (m.teamA.includes(pid)) opponents = m.teamB;
+      else if (m.teamB.includes(pid)) opponents = m.teamA;
+      opponents.forEach(oid => { sum += getPlayerScore(oid); });
+    });
+  });
+  return sum;
+}
+
+function getHeadToHead(pidA, pidB) {
+  let winsA=0, winsB=0;
+  state.rounds.forEach(r => {
+    r.matches.forEach(m => {
+      const inA_teamA = m.teamA.includes(pidA);
+      const inA_teamB = m.teamB.includes(pidA);
+      const inB_teamA = m.teamA.includes(pidB);
+      const inB_teamB = m.teamB.includes(pidB);
+      if ((inA_teamA && inB_teamA)||(inA_teamB && inB_teamB)) return; // same team
+      if (inA_teamA && inB_teamB) { if(m.result==='A') winsA++; else if(m.result==='B') winsB++; }
+      if (inA_teamB && inB_teamA) { if(m.result==='B') winsA++; else if(m.result==='A') winsB++; }
+    });
+  });
+  return winsA - winsB;
+}
+
+function partnerKey(a,b) { return [a,b].sort().join('-'); }
+function havePartnered(a,b) { return !!state.partnerHistory[partnerKey(a,b)]; }
+
+async function generateRound() {
+  viewingRoundIdx = null;
+  const activePlayers = state.players.filter(p => !p.retired).map(p => p.id);
+  const scores = {};
+  activePlayers.forEach(pid => { scores[pid] = getPlayerScore(pid); });
+
+  // Sort by score desc, then random within same score
+  const sorted = [...activePlayers].sort((a,b) => {
+    if (scores[b]!==scores[a]) return scores[b]-scores[a];
+    return Math.random()-0.5;
+  });
+
+  // Handle byes: if not divisible by 4, some sit out
+  let byes = [];
+  let toMatch = [...sorted];
+  const remainder = toMatch.length % 4;
+  if (remainder > 0) {
+    // Pick bye players from lowest scores, prefer those who haven't had byes
+    const byeCount = remainder;
+    const prevByes = new Set();
+    state.rounds.forEach(r => { if(r.byes) r.byes.forEach(b => prevByes.add(b)); });
+    // Sort candidates: those who haven't had byes first, then lowest score
+    const candidates = [...toMatch].reverse();
+    candidates.sort((a,b) => {
+      const aHad = prevByes.has(a)?1:0, bHad = prevByes.has(b)?1:0;
+      if (aHad!==bHad) return aHad-bHad;
+      return scores[a]-scores[b];
+    });
+    byes = candidates.slice(0, byeCount);
+    toMatch = toMatch.filter(p => !byes.includes(p));
+  }
+
+  // Group by score
+  const groups = {};
+  toMatch.forEach(pid => {
+    const s = scores[pid];
+    if (!groups[s]) groups[s]=[];
+    groups[s].push(pid);
+  });
+  const scoreKeys = Object.keys(groups).map(Number).sort((a,b)=>b-a);
+
+  // Pair into teams of 2 (partners), then match teams
+  let allTeams = [];
+  let unpaired = [];
+
+  // First: create partner pairs within each score group
+  scoreKeys.forEach(sk => {
+    let pool = [...(groups[sk] || []), ...unpaired];
+    unpaired = [];
+    // Shuffle for fairness
+    for (let i=pool.length-1;i>0;i--) { const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]; }
+
+    const used = new Set();
+    for (let i=0; i<pool.length; i++) {
+      if (used.has(pool[i])) continue;
+      let paired = false;
+      for (let j=i+1; j<pool.length; j++) {
+        if (used.has(pool[j])) continue;
+        if (!havePartnered(pool[i], pool[j])) {
+          allTeams.push([pool[i], pool[j]]);
+          used.add(pool[i]); used.add(pool[j]);
+          paired = true;
+          break;
+        }
+      }
+      if (!paired) unpaired.push(pool[i]);
+    }
+  });
+
+  // Handle remaining unpaired (force pair even if partnered before)
+  if (unpaired.length >= 2) {
+    for (let i=0; i<unpaired.length-1; i+=2) {
+      allTeams.push([unpaired[i], unpaired[i+1]]);
+    }
+    if (unpaired.length%2===1) {
+      byes.push(unpaired[unpaired.length-1]);
+    }
+  } else if (unpaired.length===1) {
+    byes.push(unpaired[0]);
+  }
+
+  // Now match teams: pair teams with similar combined scores
+  let matches = [];
+  const teamScores = allTeams.map(t => ({ team:t, score:scores[t[0]]+scores[t[1]] }));
+  teamScores.sort((a,b) => b.score-a.score);
+
+  const usedTeams = new Set();
+  for (let i=0; i<teamScores.length; i++) {
+    if (usedTeams.has(i)) continue;
+    for (let j=i+1; j<teamScores.length; j++) {
+      if (usedTeams.has(j)) continue;
+      matches.push({
+        teamA: teamScores[i].team,
+        teamB: teamScores[j].team,
+        result: null,
+        scoreA: null,
+        scoreB: null,
+        table: matches.length + 1
+      });
+      usedTeams.add(i);
+      usedTeams.add(j);
+      break;
+    }
+  }
+
+  // Record partner history
+  matches.forEach(m => {
+    state.partnerHistory[partnerKey(m.teamA[0], m.teamA[1])] = true;
+    state.partnerHistory[partnerKey(m.teamB[0], m.teamB[1])] = true;
+  });
+
+  const round = {
+    number: state.currentRound + 1,
+    matches: matches,
+    byes: byes,
+    confirmed: false
+  };
+  state.rounds.push(round);
+  state.currentRound = round.number;
+  await saveState();
+  render();
+  if (state.isAdmin) {
+    setTimeout(() => showToast('请重新生成分享链接发送给参赛者'), 400);
+  }
+}
+
+// ═══════════════════════════════════════
+// RANKING
+// ═══════════════════════════════════════
+function getRankings() {
+  const active = state.players.filter(p => !p.retired);
+  const data = active.map(p => ({
+    id: p.id,
+    name: p.name,
+    score: getPlayerScore(p.id),
+    oppScore: getOpponentScoreSum(p.id),
+    wins: 0, losses: 0,
+    isBye: false
+  }));
+
+  // Count wins/losses
+  state.rounds.forEach(r => {
+    r.matches.forEach(m => {
+      if (!m.result) return;
+      const winners = m.result==='A'?m.teamA:m.teamB;
+      const losers = m.result==='A'?m.teamB:m.teamA;
+      data.forEach(d => {
+        if (winners.includes(d.id)) d.wins++;
+        if (losers.includes(d.id)) d.losses++;
+      });
+    });
+    if (r.byes) {
+      r.byes.forEach(bid => {
+        const d = data.find(x=>x.id===bid);
+        if(d) d.isBye = true;
+      });
+    }
+  });
+
+  data.forEach(d => {
+    let streak = 0;
+    for (let ri = state.rounds.length - 1; ri >= 0; ri--) {
+      const round = state.rounds[ri];
+      let wonThisRound = false;
+      round.matches.forEach(m => {
+        if (!m.result) return;
+        const winners = m.result === 'A' ? m.teamA : m.teamB;
+        if (winners.includes(d.id)) wonThisRound = true;
+      });
+      if (round.byes && round.byes.includes(d.id)) wonThisRound = true;
+      if (wonThisRound) streak++;
+      else break;
+    }
+    d.streak = streak;
+  });
+
+  // Sort: score desc -> oppScore desc -> head to head
+  data.sort((a,b) => {
+    if (b.score!==a.score) return b.score-a.score;
+    if (b.oppScore!==a.oppScore) return b.oppScore-a.oppScore;
+    return getHeadToHead(b.id, a.id);
+  });
+
+  // Bye players go last among same score
+  // Actually the requirement says bye players appear at end of ranking
+  // Re-sort: non-bye first, then bye
+  const hasByeRounds = data.filter(d => d.isBye);
+  // No, requirement is: 轮空选手排名最后出现. So within ranking, they just naturally rank lower
+  // since they get 2 points but likely lower oppScore. Keep natural sort.
+
+  return data;
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+let currentTabIndex = 0;
+let currentTabs = [];
+
+function render() {
+  document.getElementById('navLogo').src = 'weblogo.png';
+
+  const isAdmin = state.isAdmin;
+  const tabs = isAdmin
+    ? ['对阵表','积分榜','选手','规则','管理']
+    : ['对阵表','积分榜','选手','规则'];
+
+  const tabsChanged = JSON.stringify(tabs) !== JSON.stringify(currentTabs);
+  if (tabsChanged) {
+    currentTabs = [...tabs];
+    currentTabIndex = 0;
+    renderTabs(tabs);
+  } else {
+    refreshCurrentPanel(tabs);
+  }
+
+  renderRoundPill();
+  document.getElementById('adminToggle').textContent = isAdmin ? '退出管理' : '管理';
+}
+function renderTabs(tabs) {
+  const seg = document.getElementById('segCtrl');
+  const slider = document.getElementById('segSlider');
+  // Clear old buttons (keep slider)
+  seg.querySelectorAll('.seg-btn').forEach(b=>b.remove());
+
+  tabs.forEach((t,i) => {
+    const btn = document.createElement('button');
+    btn.className = 'seg-btn' + (i===currentTabIndex?' on':'');
+    btn.textContent = t;
+    btn.onclick = () => {
+      currentTabIndex = i;
+      switchTab(i, tabs);
+    };
+    seg.appendChild(btn);
+  });
+
+  slider.style.width = `calc(${100/tabs.length}% - ${(tabs.length-1)*2/tabs.length}px)`;
+  if (currentTabIndex >= tabs.length) currentTabIndex = 0;
+  switchTab(currentTabIndex, tabs);
+}
+
+function switchTab(idx, tabs) {
+  currentTabIndex = idx;
+  const btns = document.querySelectorAll('.seg-btn');
+  btns.forEach((b,i) => b.className = 'seg-btn'+(i===idx?' on':''));
+  const slider = document.getElementById('segSlider');
+  slider.style.transform = `translateX(${idx*100}%)`;
+
+  refreshCurrentPanel(tabs);
+}
+
+function refreshCurrentPanel(tabs) {
+  const container = document.getElementById('panelContainer');
+  const adminArea = document.getElementById('adminArea');
+  container.innerHTML = '';
+  adminArea.style.display = 'none';
+  adminArea.innerHTML = '';
+
+  const tabName = tabs[currentTabIndex];
+  if (tabName==='对阵表') renderMatches(container);
+  else if (tabName==='积分榜') renderRankings(container);
+  else if (tabName==='选手') renderPlayers(container);
+  else if (tabName==='规则') renderRules(container);
+  else if (tabName==='管理') { adminArea.style.display='block'; renderAdmin(adminArea); }
+}
+
+function renderRoundPill() {
+  const pill = document.getElementById('roundPill');
+  if (!state.started || state.rounds.length===0) { pill.style.display='none'; return; }
+  pill.style.display='flex';
+  const r = state.rounds[state.rounds.length-1];
+  const done = r.matches.filter(m=>m.result).length;
+  document.getElementById('roundLabel').textContent = `第 ${r.number} 轮`;
+  document.getElementById('roundMeta').textContent = `已完成 ${done} / ${r.matches.length} 场`;
+}
+
+function renderMatches(container) {
+  if (!state.started) {
+    container.innerHTML = '<div class="panel on"><div style="text-align:center;padding:60px 20px;color:var(--t3)">比赛尚未开始，请等待管理员编排</div></div>';
+    return;
+  }
+  if (state.rounds.length===0) {
+    container.innerHTML = '<div class="panel on"><div style="text-align:center;padding:60px 20px;color:var(--t3)">比赛尚未开始，请等待管理员编排</div></div>';
+    return;
+  }
+  if (viewingRoundIdx !== null && viewingRoundIdx >= state.rounds.length) viewingRoundIdx = null;
+  const ri = viewingRoundIdx !== null ? viewingRoundIdx : state.rounds.length - 1;
+  const r = state.rounds[ri];
+  const isLatestRound = ri === state.rounds.length - 1;
+
+  const panel = document.createElement('div');
+  panel.className = 'panel on';
+
+  if (state.rounds.length > 1) {
+    let roundSelector = '<div class="round-scroller" style="justify-content:center">';
+    state.rounds.forEach((round, i) => {
+      const isViewing = (viewingRoundIdx === null && i === state.rounds.length - 1) || (viewingRoundIdx === i);
+      const style = isViewing
+        ? 'background:var(--ice);color:var(--bg);font-weight:600'
+        : 'background:rgba(255,255,255,0.06);color:var(--t2)';
+      roundSelector += `<button type="button" onclick="viewRound(${i})" style="padding:6px 14px;border:none;border-radius:8px;font-size:13px;cursor:pointer;${style}">第${i + 1}轮</button>`;
+    });
+    roundSelector += '</div>';
+    panel.innerHTML += roundSelector;
+  }
+
+  const pending = r.matches.filter(m => !m.result);
+  const done = r.matches.filter(m => m.result);
+
+  if (state.isAdmin && pending.length > 0 && done.length > 0) {
+    panel.innerHTML += `<div style="text-align:center;padding:8px;color:var(--orange);font-size:13px;font-weight:500">还有 ${pending.length} 场比赛未录入成绩</div>`;
+  }
+
+  if (pending.length) {
+    panel.innerHTML += `<div class="sec">正在进行</div>`;
+    let cardHTML = '<div class="card">';
+    pending.forEach((m, i) => { cardHTML += matchHTML(m, i, r); });
+    cardHTML += '</div>';
+    panel.innerHTML += cardHTML;
+  }
+  if (done.length) {
+    panel.innerHTML += `<div class="sec">已完成</div>`;
+    let cardHTML = '<div class="card">';
+    done.forEach((m, i) => { cardHTML += matchHTML(m, pending.length + i, r); });
+    cardHTML += '</div>';
+    panel.innerHTML += cardHTML;
+  }
+  if (r.byes && r.byes.length) {
+    const byeNames = r.byes.map(bid => getPlayerName(bid)).join('、');
+    panel.innerHTML += `<div style="text-align:center;padding:16px;color:var(--t3);font-size:13px">本轮轮空：${byeNames}（各得 2 分）</div>`;
+  }
+
+  if (state.isAdmin && isLatestRound) {
+    panel.innerHTML += `<div style="padding:12px 0 0"><button class="btn btn-secondary btn-block" onclick="exportPDF('matches')">导出当前对阵表 PDF</button></div>`;
+    const allDone = r.matches.every(m => m.result);
+    if (allDone && !r.confirmed) {
+      const btnText = state.currentRound >= state.totalRounds
+        ? '确认最终成绩（比赛结束）'
+        : '确认成绩 & 生成第 ' + (state.currentRound + 1) + ' 轮编排';
+      panel.innerHTML += `<div style="padding:12px 0"><button class="btn btn-success btn-block btn-lg" onclick="confirmRound()">${btnText}</button></div>`;
+    } else if (r.confirmed && state.currentRound >= state.totalRounds) {
+      panel.innerHTML += `<div style="text-align:center;padding:20px;color:var(--green);font-size:17px;font-weight:600">全部 ${state.totalRounds} 轮比赛已结束！</div>`;
+    }
+  }
+
+  if (state.isAdmin) {
+    panel.innerHTML += `<div style="padding:16px 0 8px"><button class="btn btn-primary btn-block" onclick="generateShareLink()">生成分享链接（发微信群）</button></div>`;
+  }
+
+  container.appendChild(panel);
+}
+
+function matchHTML(m, idx, round) {
+  const nameA1 = getPlayerName(m.teamA[0]), nameA2 = getPlayerName(m.teamA[1]);
+  const nameB1 = getPlayerName(m.teamB[0]), nameB2 = getPlayerName(m.teamB[1]);
+  let tagText;
+  if (m.result) {
+    tagText = ICON.podium + ' 已结束';
+  } else {
+    tagText = state.isAdmin ? '待录入' : (ICON.ball + ' 进行中');
+  }
+  const tagClass = m.result ? 'tag-done' : (state.isAdmin ? 'tag-wait' : 'tag-live');
+  const classA = m.result ? (m.result === 'A' ? 'W' : 'L') : 'P';
+  const classB = m.result ? (m.result === 'B' ? 'W' : 'L') : 'P';
+  let displayScoreA, displayScoreB;
+  if (m.result) {
+    displayScoreA = m.scoreA !== null && m.scoreA !== undefined ? m.scoreA : (m.result === 'A' ? '胜' : '负');
+    displayScoreB = m.scoreB !== null && m.scoreB !== undefined ? m.scoreB : (m.result === 'B' ? '胜' : '负');
+  } else {
+    displayScoreA = '—';
+    displayScoreB = '—';
+  }
+  const matchIdx = round.matches.indexOf(m);
+  const roundIdx = round.number - 1;
+  const courtLabel = /^\d+$/.test(String(m.table)) ? (ICON.court + ' ' + m.table + '号场地') : String(m.table);
+
+  let actions = '';
+  if (state.isAdmin && !round.confirmed) {
+    if (!m.result) {
+      actions = `<div class="score-input-row">
+      <input type="number" class="score-input" id="sA_${roundIdx}_${matchIdx}" placeholder="0" min="0" max="99" step="1" inputmode="numeric" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+      <span class="score-divider">:</span>
+      <input type="number" class="score-input" id="sB_${roundIdx}_${matchIdx}" placeholder="0" min="0" max="99" step="1" inputmode="numeric" onkeypress="return event.charCode >= 48 && event.charCode <= 57">
+      <button type="button" class="btn btn-primary" style="margin-left:8px;padding:10px 16px;font-size:14px" onclick="submitScore(${roundIdx},${matchIdx})">确认</button>
+    </div>`;
+    } else {
+      actions = `<div class="match-actions">
+        <button type="button" class="result-btn undo" onclick="clearResult(${roundIdx},${matchIdx})">撤销结果</button>
+      </div>`;
+    }
+  }
+
+  return `<div class="match">
+    <div class="match-top">
+      <span class="match-id">第 ${matchIdx + 1} 场 · ${courtLabel}</span>
+      <span class="tag ${tagClass}">${tagText}</span>
+    </div>
+    <div class="match-body">
+      <div class="match-team ${classA}">
+        <div class="match-names">${nameA1}<br><span class="p2">${nameA2}</span></div>
+        <div class="match-score">${displayScoreA}</div>
+      </div>
+      <div class="match-vs"><span>VS</span></div>
+      <div class="match-team ${classB}">
+        <div class="match-names">${nameB1}<br><span class="p2">${nameB2}</span></div>
+        <div class="match-score">${displayScoreB}</div>
+      </div>
+    </div>
+    ${actions}
+  </div>`;
+}
+
+async function submitScore(roundIdx, matchIdx) {
+  const inputA = document.getElementById('sA_' + roundIdx + '_' + matchIdx);
+  const inputB = document.getElementById('sB_' + roundIdx + '_' + matchIdx);
+  if (!inputA || !inputB) return;
+
+  const valA = inputA.value.trim();
+  const valB = inputB.value.trim();
+
+  if (valA === '' || valB === '') {
+    showToast('请输入双方比分');
+    return;
+  }
+
+  const a = Number(valA);
+  const b = Number(valB);
+  if (!Number.isInteger(a) || !Number.isInteger(b)) {
+    showToast('比分必须是整数');
+    return;
+  }
+
+  if (a < 0 || b < 0) {
+    showToast('比分不能为负数');
+    return;
+  }
+
+  if (a === b) {
+    showToast('比分不能相同，匹克球没有平局');
+    return;
+  }
+
+  if (a > 30 || b > 30) {
+    if (!confirm('比分超过30分，确定输入正确吗？(' + a + ':' + b + ')')) {
+      return;
+    }
+  }
+
+  const winScore = Math.max(a, b);
+  if (winScore < 11) {
+    if (!confirm('胜方得分低于11分，确定输入正确吗？(' + a + ':' + b + ')')) {
+      return;
+    }
+  }
+
+  const match = state.rounds[roundIdx].matches[matchIdx];
+  match.scoreA = a;
+  match.scoreB = b;
+  match.result = a > b ? 'A' : 'B';
+  await saveState();
+  render();
+
+  const winnerSide = a > b ? '左方' : '右方';
+  showToast('已录入 ' + a + ' : ' + b + '（' + winnerSide + '胜）');
+}
+
+async function clearResult(roundIdx, matchIdx) {
+  const match = state.rounds[roundIdx].matches[matchIdx];
+  match.result = null;
+  match.scoreA = null;
+  match.scoreB = null;
+  await saveState();
+  render();
+  showToast('已撤销结果');
+}
+
+async function confirmRound() {
+  const r = state.rounds[state.rounds.length - 1];
+  const unfinished = r.matches.filter(m => !m.result).length;
+  if (unfinished > 0) {
+    showToast('还有 ' + unfinished + ' 场比赛未录入成绩');
+    return;
+  }
+
+  const isLastRound = state.currentRound >= state.totalRounds;
+  const confirmMsg = isLastRound
+    ? '确认本轮成绩？这是最后一轮，确认后比赛结束。'
+    : '确认本轮成绩并生成第 ' + (state.currentRound + 1) + ' 轮编排？';
+
+  if (!confirm(confirmMsg)) return;
+
+  r.confirmed = true;
+  await saveState();
+
+  if (!isLastRound) {
+    await generateRound();
+    showToast('第 ' + state.currentRound + ' 轮已编排，请导出对阵表');
+  } else {
+    render();
+    showToast('全部 ' + state.totalRounds + ' 轮比赛已结束！');
+  }
+}
+
+function renderRankings(container) {
+  const panel = document.createElement('div');
+  panel.className = 'panel on';
+
+  if (!state.started) {
+    panel.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--t3)">比赛尚未开始</div>';
+    container.appendChild(panel);
+    return;
+  }
+
+  const rankings = getRankings();
+  if (!rankings.length) {
+    panel.innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--t3)">暂无排名数据</div>';
+    container.appendChild(panel); return;
+  }
+
+  const roundNum = state.currentRound || 0;
+  panel.innerHTML += `<div class="sec">第 ${roundNum} 轮后积分排名</div>`;
+  let html = '<div class="card">';
+  rankings.forEach((r,i) => {
+    const pos = i+1;
+    const posClass = pos===1?'rank-1':pos===2?'rank-2':pos===3?'rank-3':'rank-x';
+    const posContent = pos <= 3 ? ICON.trophy : pos;
+    const streakBadge = r.streak >= 3
+      ? '<span style="display:inline-flex;align-items:center;gap:2px;font-size:11px;color:var(--orange);font-weight:600;margin-left:6px">' + ICON.fire + ' ' + r.streak + '连胜</span>'
+      : '';
+    html += `<div class="rank-item">
+      <div class="rank-pos ${posClass}">${posContent}</div>
+      <div class="rank-info">
+        <div class="rank-name">${r.name}${streakBadge}</div>
+        <div class="rank-sub">${r.wins}胜 ${r.losses}负 · 小分 ${r.oppScore}</div>
+      </div>
+      <div class="rank-pts"><b>${r.score}</b><span>分</span></div>
+    </div>`;
+  });
+  html += '</div>';
+  panel.innerHTML += html;
+
+  if (state.isAdmin) {
+    panel.innerHTML += `<div style="padding:16px 0"><button class="btn btn-secondary btn-block" onclick="exportPDF('ranking')">导出排名 PDF</button></div>`;
+  }
+
+  container.appendChild(panel);
+}
+
+function renderPlayers(container) {
+  const panel = document.createElement('div');
+  panel.className = 'panel on';
+  const active = state.players.filter(p=>!p.retired);
+  panel.innerHTML += `<div class="sec">已录入 ${active.length} 名选手</div>`;
+  let html = '<div class="card"><div class="player-grid">';
+  active.forEach(p => {
+    const score = getPlayerScore(p.id);
+    const del = state.isAdmin && !state.started ? `<button class="del" onclick="removePlayer(${p.id})">×</button>` : '';
+    html += `<span class="player-chip">${p.name} <span class="sc">${score}分</span>${del}</span>`;
+  });
+  html += '</div></div>';
+  panel.innerHTML += html;
+  container.appendChild(panel);
+}
+
+function renderRules(container) {
+  const panel = document.createElement('div');
+  panel.className = 'panel on';
+  panel.innerHTML = `<div class="card" style="margin-top:12px">
+    <div class="rules-content">
+      <h3>比赛赛制</h3>
+      <p>本次比赛采用<strong>瑞士制积分循环赛</strong>（Swiss System），共 ${state.totalRounds} 轮。所有选手参与匹克球双打比赛，每轮重新配对搭档和对阵。</p>
+
+      <h3>配对规则</h3>
+      <p>1. 首轮随机配对，后续轮次按积分相近原则配对</p>
+      <p>2. 积分相同的选手优先组成搭档</p>
+      <p>3. 已经搭过档的选手不再组成搭档</p>
+      <p>4. 积分相近的队伍优先对阵</p>
+
+      <h3>计分规则</h3>
+      <p>1. 胜方每人 <strong>+2 分</strong>，负方 <strong>+0 分</strong></p>
+      <p>2. 轮空选手获得 <strong>+2 分</strong></p>
+
+      <h3>排名规则</h3>
+      <p>1. 积分高者排名靠前</p>
+      <p>2. 积分相同时，比较<strong>小分</strong>（对手积分总和），小分高者靠前</p>
+      <p>3. 小分也相同时，比较直接交手胜负，胜方靠前</p>
+
+      <h3>关于瑞士制</h3>
+      <p>瑞士制起源于1895年瑞士苏黎世的国际象棋比赛，是一种高效的积分循环赛制。它的核心思想是"强者碰强者、弱者碰弱者"，既保证了竞技水平，又让每位选手都能打满全部轮次，不会被淘汰。</p>
+    </div>
+  </div>`;
+  container.appendChild(panel);
+}
+
+function renderAdmin(area) {
+  if (!state.started) {
+    // Setup phase
+    area.innerHTML = `
+      <div class="admin-card">
+        <div class="admin-title">比赛设置</div>
+        <div class="form-group">
+          <label class="form-label">比赛名称</label>
+          <input class="text-input" id="tName" value="${state.tournamentName}" style="width:100%">
+        </div>
+        <div class="form-group">
+          <label class="form-label">比赛日期</label>
+          <input class="text-input" type="date" id="tDate" value="${state.date}" style="width:100%">
+        </div>
+        <div class="form-group">
+          <label class="form-label">总轮次（5-12）</label>
+          <input class="text-input" type="number" id="tRounds" value="${state.totalRounds}" min="5" max="12" style="width:100%">
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-title">录入选手</div>
+        <div class="input-row">
+          <input class="text-input" id="playerInput" placeholder="输入姓名，回车添加" onkeydown="if(event.key==='Enter')addPlayer()">
+          <button class="btn btn-primary" onclick="addPlayer()">添加</button>
+        </div>
+        <div class="form-group">
+          <label class="form-label">或批量粘贴（每行一个名字）</label>
+          <textarea class="text-input" id="batchInput" placeholder="张伟&#10;李明&#10;王芳&#10;..."></textarea>
+          <button class="btn btn-secondary" style="margin-top:8px;width:100%" onclick="batchAdd()">批量添加</button>
+        </div>
+        <div style="font-size:13px;color:var(--t3);margin-top:8px">
+          当前已录入 <strong style="color:var(--ice)">${state.players.filter(p=>!p.retired).length}</strong> 名选手
+        </div>
+        <div class="input-row" style="margin-top:12px">
+          <input class="text-input" id="oldNameInput" placeholder="原姓名" style="flex:1">
+          <input class="text-input" id="newNameInput" placeholder="新姓名" style="flex:1">
+          <button type="button" class="btn btn-secondary" onclick="renamePlayer()">修改姓名</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <button type="button" class="btn btn-primary btn-block" onclick="generateShareLink()">生成分享链接（发微信群）</button>
+      </div>
+
+      <div class="admin-card">
+        <button class="btn btn-primary btn-block btn-lg" onclick="startTournament()" ${state.players.length<4?'disabled style="opacity:0.4"':''}>
+          开始比赛（生成第 1 轮编排）
+        </button>
+        ${state.players.length<4?'<div style="text-align:center;font-size:13px;color:var(--t3);margin-top:8px">至少需要 4 名选手</div>':''}
+      </div>
+
+      <div class="admin-card">
+        <button class="btn btn-danger btn-block" onclick="resetTournament()">重置比赛（清除所有数据）</button>
+      </div>
+    `;
+  } else {
+    // During tournament
+    area.innerHTML = `
+      <div class="admin-card">
+        <div class="admin-title">比赛信息</div>
+        <div style="font-size:14px;color:var(--t2);line-height:2">
+          比赛名称：${state.tournamentName}<br>
+          比赛日期：${state.date}<br>
+          总轮次：${state.totalRounds}<br>
+          当前轮次：${state.currentRound}<br>
+          选手人数：${state.players.filter(p=>!p.retired).length}
+        </div>
+        <button type="button" class="btn btn-primary btn-block" style="margin-top:16px" onclick="generateShareLink()">生成分享链接（发微信群）</button>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-title">导出</div>
+        <button class="btn btn-secondary btn-block" style="margin-bottom:8px" onclick="exportPDF('matches')">导出当前对阵表 PDF</button>
+        <button class="btn btn-secondary btn-block" onclick="exportPDF('ranking')">导出积分排名 PDF</button>
+      </div>
+
+      <div class="admin-card">
+        <div class="admin-title">选手管理</div>
+        <div class="input-row" style="margin-top:0">
+          <input class="text-input" id="oldNameInput" placeholder="原姓名" style="flex:1">
+          <input class="text-input" id="newNameInput" placeholder="新姓名" style="flex:1">
+          <button type="button" class="btn btn-secondary" onclick="renamePlayer()">修改姓名</button>
+        </div>
+        <div class="input-row" style="margin-top:12px">
+          <input class="text-input" id="retireInput" placeholder="输入要退赛的选手姓名">
+          <button type="button" class="btn btn-danger" onclick="retirePlayer()">标记退赛</button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <button class="btn btn-danger btn-block" onclick="resetTournament()">重置比赛（清除所有数据）</button>
+      </div>
+    `;
+  }
+}
+
+// ═══════════════════════════════════════
+// PLAYER MANAGEMENT
+// ═══════════════════════════════════════
+let nextId = 1;
+async function addPlayer() {
+  const input = document.getElementById('playerInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (state.players.some(p=>p.name===name&&!p.retired)) { showToast('该选手已存在'); return; }
+  state.players.push({ id: nextId++, name: name, retired: false });
+  input.value = '';
+  await saveState();
+  render();
+  showToast(`已添加：${name}`);
+}
+
+async function batchAdd() {
+  const ta = document.getElementById('batchInput');
+  const lines = ta.value.split('\n').map(l=>l.trim()).filter(l=>l);
+  let count = 0;
+  lines.forEach(name => {
+    if (!state.players.some(p=>p.name===name&&!p.retired)) {
+      state.players.push({ id: nextId++, name: name, retired: false });
+      count++;
+    }
+  });
+  ta.value = '';
+  await saveState();
+  render();
+  showToast(`已批量添加 ${count} 名选手`);
+}
+
+async function removePlayer(id) {
+  state.players = state.players.filter(p=>p.id!==id);
+  await saveState();
+  render();
+}
+
+async function retirePlayer() {
+  const input = document.getElementById('retireInput');
+  const name = input.value.trim();
+  const p = state.players.find(x=>x.name===name&&!x.retired);
+  if (!p) { showToast('未找到该选手'); return; }
+  p.retired = true;
+  input.value = '';
+  await saveState();
+  render();
+  showToast(`${name} 已标记退赛`);
+}
+
+// ═══════════════════════════════════════
+// TOURNAMENT CONTROL
+// ═══════════════════════════════════════
+async function startTournament() {
+  const nameEl = document.getElementById('tName');
+  const dateEl = document.getElementById('tDate');
+  const roundsEl = document.getElementById('tRounds');
+  if (nameEl) state.tournamentName = nameEl.value || state.tournamentName;
+  if (dateEl) state.date = dateEl.value || state.date;
+  if (roundsEl) state.totalRounds = Math.min(12, Math.max(5, parseInt(roundsEl.value)||8));
+
+  // Update title
+  document.querySelector('.nav-large h1').textContent = state.tournamentName;
+
+  state.started = true;
+  nextId = Math.max(...state.players.map(p=>p.id), 0) + 1;
+  await saveState();
+  await generateRound();
+  showToast('比赛开始！第 1 轮已编排');
+}
+
+async function resetTournament() {
+  const input = prompt('此操作将清除所有比赛数据且不可恢复！\n\n请输入"确认重置"四个字来执行：');
+  if (input !== '确认重置') {
+    if (input !== null) showToast('输入不正确，未执行重置');
+    return;
+  }
+  try {
+    const res = await fetch(API_BASE + '/reset', {
+      method: 'POST',
+      headers: { 'X-Admin-Password': adminPassword }
+    });
+    if (!res.ok) { showToast('重置失败'); return; }
+  } catch (e) {
+    showToast('重置失败');
+    return;
+  }
+  sessionStorage.removeItem('feiyang_admin_pwd');
+  viewingRoundIdx = null;
+  state = {
+    tournamentName: '飞扬匹克内部循环赛', date: new Date().toISOString().slice(0,10),
+    totalRounds: 8, players: [], rounds: [], currentRound: 0,
+    started: false, isAdmin: state.isAdmin, partnerHistory: {}
+  };
+  nextId = 1;
+  render();
+  showToast('比赛已重置');
+}
+
+// ═══════════════════════════════════════
+// EXPORT PDF (print)
+// ═══════════════════════════════════════
+function exportPDF(type) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    showToast('请允许弹出窗口以导出 PDF');
+    return;
+  }
+  const logo = document.getElementById('navLogo').src;
+  let content = '';
+  if (type === 'matches') {
+    const ri = viewingRoundIdx !== null ? viewingRoundIdx : state.rounds.length - 1;
+    content = generatePrintMatches(logo, ri);
+  } else if (type === 'ranking') {
+    content = generatePrintRanking(logo);
+  } else {
+    content = '<!DOCTYPE html><html><body>未知类型</body></html>';
+  }
+  printWindow.document.write(content);
+  printWindow.document.close();
+  printWindow.onload = function () {
+    setTimeout(function () { printWindow.print(); }, 150);
+  };
+}
+
+function generatePrintMatches(logo, roundIdx) {
+  const r = state.rounds[roundIdx];
+  if (!r) return '<!DOCTYPE html><html><body>暂无对阵数据</body></html>';
+
+  let rows = '';
+  r.matches.forEach((m, i) => {
+    const nameA = getPlayerName(m.teamA[0]) + ' / ' + getPlayerName(m.teamA[1]);
+    const nameB = getPlayerName(m.teamB[0]) + ' / ' + getPlayerName(m.teamB[1]);
+    let scoreCell = '';
+    if (m.result) {
+      const sA = m.scoreA !== null && m.scoreA !== undefined ? m.scoreA : (m.result === 'A' ? '胜' : '负');
+      const sB = m.scoreB !== null && m.scoreB !== undefined ? m.scoreB : (m.result === 'B' ? '胜' : '负');
+      const winA = m.result === 'A';
+      scoreCell = '<span style="font-weight:' + (winA ? '700' : '400') + ';color:' + (winA ? '#0D2137' : '#999') + '">' + sA + '</span>' +
+        ' : ' +
+        '<span style="font-weight:' + (!winA ? '700' : '400') + ';color:' + (!winA ? '#0D2137' : '#999') + '">' + sB + '</span>';
+    } else {
+      scoreCell = '<span style="color:#999">— : —</span>';
+    }
+    const status = m.result ? '已完成' : '正在进行';
+    const statusColor = m.result ? '#248A3D' : '#FF9500';
+    const courtLabel = /^\d+$/.test(String(m.table)) ? String(m.table) + '号场地' : String(m.table);
+    rows += '<tr>' +
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + courtLabel + '</td>' +
+      '<td style="text-align:left;font-weight:500;' + (m.result === 'A' ? '' : 'color:#666') + '">' + nameA + '</td>' +
+      '<td>' + scoreCell + '</td>' +
+      '<td style="text-align:left;font-weight:500;' + (m.result === 'B' ? '' : 'color:#666') + '">' + nameB + '</td>' +
+      '<td style="color:' + statusColor + ';font-weight:600">' + status + '</td>' +
+      '</tr>';
+  });
+
+  let byeInfo = '';
+  if (r.byes && r.byes.length) {
+    const byeNames = r.byes.map(bid => getPlayerName(bid)).join('、');
+    byeInfo = '<div style="text-align:center;padding:12px;font-size:13px;color:#666">本轮轮空：' + byeNames + '（各得 2 分）</div>';
+  }
+
+  return generatePrintHTML(
+    '第 ' + r.number + ' 轮 对阵表',
+    logo,
+    '<table>' +
+    '<thead><tr><th style="width:6%">场次</th><th style="width:10%">场地</th><th style="width:26%;text-align:left">队伍 A</th><th style="width:14%">比分</th><th style="width:26%;text-align:left">队伍 B</th><th style="width:18%">状态</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>' + byeInfo,
+    '第 ' + r.number + ' 轮 / 共 ' + state.totalRounds + ' 轮'
+  );
+}
+
+function generatePrintRanking(logo) {
+  const rankings = getRankings();
+  if (!rankings.length) return '<!DOCTYPE html><html><body>暂无排名数据</body></html>';
+
+  const trophySvg = '<svg width="14" height="14" viewBox="0 0 32 32" style="vertical-align:middle"><path d="M10 6h12v2h4v4c0 2-2 4-4 4h-1c-1 3-3 4-5 5v3h4v2H12v-2h4v-3c-2-1-4-2-5-5H10c-2 0-4-2-4-4V8h4V6z" fill="currentColor"/></svg>';
+  const fireSvg = '<svg width="12" height="12" viewBox="0 0 32 32" style="vertical-align:middle"><path d="M16 4c-2 6-8 8-8 16a8 8 0 0016 0c0-8-6-10-8-16z" fill="#FF9500"/></svg>';
+
+  let rows = '';
+  rankings.forEach((r, i) => {
+    const pos = i + 1;
+    let posStyle = 'background:#EEE;color:#666';
+    if (pos === 1) posStyle = 'background:#FFD60A;color:#7A5A00';
+    else if (pos === 2) posStyle = 'background:#D1D1D6;color:#3A3A3C';
+    else if (pos === 3) posStyle = 'background:#D4A76A;color:#4A2800';
+
+    const posDisplay = pos <= 3 ? trophySvg : String(pos);
+    const streakPrint = r.streak >= 3
+      ? '<span style="display:inline-flex;align-items:center;gap:2px;font-size:11px;color:#FF9500;font-weight:600;margin-left:6px">' + fireSvg + ' ' + r.streak + '连胜</span>'
+      : '';
+
+    rows += '<tr>' +
+      '<td><span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-size:12px;font-weight:700;' + posStyle + '">' + posDisplay + '</span></td>' +
+      '<td style="text-align:left;font-weight:500">' + r.name + streakPrint + '</td>' +
+      '<td style="font-weight:700;font-size:16px">' + r.score + '</td>' +
+      '<td>' + r.oppScore + '</td>' +
+      '<td>' + r.wins + '</td>' +
+      '<td>' + r.losses + '</td>' +
+      '</tr>';
+  });
+
+  return generatePrintHTML(
+    '第 ' + state.currentRound + ' 轮后 积分排名',
+    logo,
+    '<table>' +
+    '<thead><tr><th style="width:8%">名次</th><th style="width:26%;text-align:left">姓名</th><th style="width:14%">积分</th><th style="width:14%">小分</th><th style="width:12%">胜</th><th style="width:12%">负</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody></table>',
+    '第 ' + state.currentRound + ' 轮后排名 / 共 ' + state.totalRounds + ' 轮'
+  );
+}
+
+function generatePrintHTML(subtitle, logo, tableContent, footerRight) {
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>打印 - ' + state.tournamentName + '</title>' +
+    '<style>' +
+    'body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;padding:32px;color:#000;font-size:13px}' +
+    '.hdr{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:2.5px solid #0D2137;margin-bottom:16px}' +
+    '.hdr img{height:40px;margin-right:12px}' +
+    '.hdr-left{display:flex;align-items:center}' +
+    '.hdr .org{font-size:12px;color:#666;letter-spacing:1px}' +
+    '.hdr .title{font-size:20px;font-weight:700;color:#0D2137}' +
+    '.hdr .meta{text-align:right;font-size:12px;color:#666;line-height:1.6}' +
+    'table{width:100%;border-collapse:collapse;margin-top:8px}' +
+    'th{background:#0D2137;color:#fff;font-weight:600;padding:8px 10px;text-align:center;font-size:12px;letter-spacing:0.5px}' +
+    'td{padding:8px 10px;border-bottom:0.5px solid #ddd;text-align:center;font-size:13px}' +
+    'tr:nth-child(even) td{background:#F8F9FA}' +
+    '.ftr{display:flex;justify-content:space-between;margin-top:16px;padding-top:8px;border-top:1px solid #ddd;font-size:11px;color:#999}' +
+    '@media print{body{padding:20px}button{display:none!important}}' +
+    '</style></head><body>' +
+    '<div class="hdr">' +
+    '<div class="hdr-left"><img src="' + logo + '"><div><div class="org">飞扬匹克球俱乐部</div><div class="title">' + state.tournamentName + '</div></div></div>' +
+    '<div class="meta">' + subtitle + '<br>' + state.date + '</div>' +
+    '</div>' +
+    tableContent +
+    '<div class="ftr"><span>飞扬匹克球俱乐部 · 瑞士制积分循环赛</span><span>' + footerRight + '</span></div>' +
+    '<div style="text-align:center;margin-top:20px"><button onclick="window.print()" style="padding:10px 30px;font-size:15px;border:1px solid #ddd;border-radius:8px;background:#fff;cursor:pointer">打印此页</button></div>' +
+    '</body></html>';
+}
+
+// ═══════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════
+function toggleAdmin() {
+  if (state.isAdmin) {
+    state.isAdmin = false;
+    adminPassword = '';
+    sessionStorage.removeItem('feiyang_admin_pwd');
+    render();
+    showToast('已退出管理模式');
+  } else {
+    document.getElementById('loginModal').classList.add('on');
+    setTimeout(()=>document.getElementById('pwdInput').focus(), 100);
+  }
+}
+async function doLogin() {
+  const pwd = document.getElementById('pwdInput').value;
+  try {
+    const res = await fetch(API_BASE + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pwd })
+    });
+    if (!res.ok) {
+      document.getElementById('loginErr').style.display = 'block';
+      return;
+    }
+    state.isAdmin = true;
+    adminPassword = pwd;
+    sessionStorage.setItem('feiyang_admin_pwd', pwd);
+    document.getElementById('loginModal').classList.remove('on');
+    document.getElementById('pwdInput').value = '';
+    document.getElementById('loginErr').style.display = 'none';
+    await loadState();
+    if (state.players.length) nextId = Math.max(...state.players.map(p=>p.id), 0) + 1;
+    render();
+    showToast('已进入管理模式');
+  } catch (e) {
+    showToast('网络错误');
+  }
+}
+function closeLogin() {
+  document.getElementById('loginModal').classList.remove('on');
+  document.getElementById('pwdInput').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+}
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function getPlayerName(id) {
+  const p = state.players.find(x=>x.id===id);
+  return p ? p.name : '???';
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2000);
+}
+
+// Navbar scroll
+let scrollTick = false;
+window.addEventListener('scroll', () => {
+  if (!scrollTick) {
+    requestAnimationFrame(() => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY>16);
+      scrollTick = false;
+    });
+    scrollTick = true;
+  }
+});
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+async function restoreAdminFromSession() {
+  if (location.hash.startsWith('#v=')) return;
+  const savedPwd = sessionStorage.getItem('feiyang_admin_pwd');
+  if (!savedPwd) return;
+  try {
+    const res = await fetch(API_BASE + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: savedPwd })
+    });
+    if (res.ok) {
+      state.isAdmin = true;
+      adminPassword = savedPwd;
+    } else {
+      sessionStorage.removeItem('feiyang_admin_pwd');
+    }
+  } catch (e) {}
+}
+
+async function init() {
+  await loadState();
+  loadFromHash();
+  await restoreAdminFromSession();
+  applyTestRosterIfEmpty();
+  if (state.players.length) nextId = Math.max(...state.players.map(p=>p.id), 0) + 1;
+  render();
+
+  setInterval(async () => {
+    if (!state.isAdmin) {
+      const oldHash = getStateHash();
+      await loadState();
+      const newHash = getStateHash();
+      if (newHash !== oldHash) {
+        render();
+      }
+    }
+  }, 15000);
+}
+
+init();
+</script>
+</body>
+</html>
