@@ -1,42 +1,179 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="记录盘前、盘中、盘后的市场观察与交易思考" />
-    <title>Market Notes · 市场观察</title>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Chuck 的学习空间</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --text2: #8e8e93;
+      --border: rgba(60,60,67,0.1);
+      --accent: #007aff;
+      --green: #34c759;
+      --orange: #ff9500;
+      --red: #ff3b30;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    .nav-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(242,242,247,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.33px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center;
+      height: 44px; padding: 0 16px;
+      justify-content: center;
+    }
+    .nav-title { font-size: 17px; font-weight: 600; }
 
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    .content { padding: 32px 16px 80px; max-width: 480px; margin: 0 auto; }
 
-    <!-- Manifest & theme -->
-    <link rel="manifest" href="/manifest.json" />
-    <meta name="theme-color" content="#223248" />
-    <meta name="msapplication-TileColor" content="#223248" />
-    <meta name="msapplication-TileImage" content="/mstile-150x150.png" />
+    .greeting {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .greeting .emoji { font-size: 48px; margin-bottom: 10px; }
+    .greeting h2 { font-size: 22px; font-weight: 700; }
+    .greeting p { font-size: 15px; color: var(--text2); margin-top: 4px; }
 
-    <!-- Open Graph（微信/QQ/iOS 分享预览；必须用 https 绝对 URL，否则会显示默认链接图标） -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://chuckfan.com/" />
-    <meta property="og:title" content="Market Notes · 市场观察" />
-    <meta property="og:description" content="记录盘前、盘中、盘后的市场观察与交易思考" />
-    <meta property="og:image" content="https://chuckfan.com/og-image-1200x630.png?v=1" />
-    <meta property="og:image:secure_url" content="https://chuckfan.com/og-image-1200x630.png?v=1" />
-    <meta property="og:image:type" content="image/png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 4px;
+      margin-bottom: 8px;
+    }
+    .card-list {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 32px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .subject-row {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--text);
+      gap: 14px;
+      border-bottom: 0.33px solid var(--border);
+    }
+    .subject-row:last-child { border-bottom: none; }
+    .subject-row:active { background: rgba(0,0,0,0.04); }
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Market Notes · 市场观察" />
-    <meta name="twitter:description" content="记录盘前、盘中、盘后的市场观察与交易思考" />
-    <meta name="twitter:image" content="https://chuckfan.com/og-image-1200x630.png?v=1" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+    .subject-icon {
+      width: 36px; height: 36px;
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .icon-en { background: #007aff22; }
+    .icon-zh { background: #ff3b3022; }
+    .icon-math { background: #34c75922; }
+
+    .subject-info { flex: 1; }
+    .subject-name { font-size: 17px; font-weight: 500; }
+    .subject-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    .subject-badge {
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+    .badge-active { background: #34c75920; color: #34c759; }
+    .badge-soon   { background: #8e8e9320; color: #8e8e93; }
+
+    .chevron { color: var(--border); font-size: 18px; font-weight: 600; }
+
+    .mama-row {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--text);
+      gap: 14px;
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .mama-row:active { background: rgba(0,0,0,0.04); }
+    .icon-mama { background: #af52de22; font-size: 20px; }
+  </style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div class="nav-inner">
+    <div class="nav-title">Chuck 的学习空间</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="greeting">
+    <div class="emoji">👋</div>
+    <h2>今天学什么？</h2>
+    <p>选一个科目开始练习</p>
+  </div>
+
+  <div class="section-label">科目</div>
+  <div class="card-list">
+    <a href="/english/" class="subject-row">
+      <div class="subject-icon icon-en">🔤</div>
+      <div class="subject-info">
+        <div class="subject-name">英语</div>
+        <div class="subject-sub">时态 · 词汇 · 阅读</div>
+      </div>
+      <span class="subject-badge badge-active">进行中</span>
+      <span class="chevron">›</span>
+    </a>
+    <a href="/chinese/" class="subject-row">
+      <div class="subject-icon icon-zh">📖</div>
+      <div class="subject-info">
+        <div class="subject-name">语文</div>
+        <div class="subject-sub">古诗词 · 字词 · 阅读</div>
+      </div>
+      <span class="subject-badge badge-active">进行中</span>
+      <span class="chevron">›</span>
+    </a>
+    <a href="/math/" class="subject-row">
+      <div class="subject-icon icon-math">📐</div>
+      <div class="subject-info">
+        <div class="subject-name">数学</div>
+        <div class="subject-sub">即将开始</div>
+      </div>
+      <span class="subject-badge badge-soon">待启动</span>
+      <span class="chevron">›</span>
+    </a>
+  </div>
+
+  <div class="section-label">家长</div>
+  <a href="/mama/" class="mama-row">
+    <div class="subject-icon icon-mama">👩</div>
+    <div class="subject-info">
+      <div class="subject-name">妈妈入口</div>
+      <div class="subject-sub">查看进度 · 补充信息</div>
+    </div>
+    <span class="chevron">›</span>
+  </a>
+</div>
+
+</body>
 </html>

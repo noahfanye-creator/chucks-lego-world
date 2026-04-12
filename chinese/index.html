@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>语文 · Chuck 学习</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --text2: #8e8e93;
+      --border: rgba(60,60,67,0.1);
+      --accent: #007aff;
+      --green: #34c759;
+      --orange: #ff9500;
+      --red: #ff3b30;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    .nav-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(242,242,247,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.33px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center;
+      height: 44px; padding: 0 16px;
+    }
+    .nav-back {
+      font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-title {
+      font-size: 17px; font-weight: 600;
+      flex: 1; text-align: center;
+      margin-right: 40px;
+    }
+
+    .content { padding: 24px 16px 80px; max-width: 480px; margin: 0 auto; }
+
+    .hero {
+      background: linear-gradient(135deg, #ff3b30, #ff6b6b);
+      border-radius: 16px;
+      padding: 24px 20px;
+      color: white;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 16px rgba(255,59,48,0.25);
+    }
+    .hero-icon { font-size: 36px; margin-bottom: 10px; }
+    .hero h2 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .hero p { font-size: 14px; opacity: 0.85; line-height: 1.5; }
+    .hero-target {
+      margin-top: 16px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 12px 14px;
+    }
+    .hero-target-label { font-size: 12px; opacity: 0.75; margin-bottom: 6px; }
+    .hero-target-scores {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .score-box {
+      text-align: center;
+    }
+    .score-num { font-size: 28px; font-weight: 700; }
+    .score-label { font-size: 11px; opacity: 0.75; }
+    .score-arrow { font-size: 20px; opacity: 0.6; }
+    .score-target .score-num { color: #ffd60a; }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 4px;
+      margin-bottom: 8px;
+      margin-top: 24px;
+    }
+
+    .card-list {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+
+    .phase-row {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      gap: 14px;
+      border-bottom: 0.33px solid var(--border);
+    }
+    .phase-row:last-child { border-bottom: none; }
+
+    .phase-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-urgent { background: var(--orange); }
+    .dot-todo { background: rgba(142,142,147,0.3); }
+
+    .phase-info { flex: 1; }
+    .phase-name { font-size: 15px; font-weight: 500; }
+    .phase-sub { font-size: 13px; color: var(--text2); margin-top: 2px; }
+
+    .phase-badge {
+      font-size: 12px; padding: 2px 8px;
+      border-radius: 20px; font-weight: 500;
+    }
+    .badge-urgent { background: #ff950020; color: var(--orange); }
+    .badge-todo { background: #8e8e9320; color: var(--text2); }
+
+    .action-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+    .action-title {
+      font-size: 13px; font-weight: 600;
+      color: var(--orange); margin-bottom: 8px;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .action-desc { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+    .action-sub { font-size: 13px; color: var(--text2); line-height: 1.6; }
+
+    .checklist {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+    .check-item {
+      display: flex; align-items: flex-start;
+      padding: 12px 16px;
+      gap: 12px;
+      border-bottom: 0.33px solid var(--border);
+      font-size: 14px;
+    }
+    .check-item:last-child { border-bottom: none; }
+    .check-icon { font-size: 16px; flex-shrink: 0; padding-top: 1px; }
+    .check-text { flex: 1; line-height: 1.5; }
+    .check-label { font-weight: 500; }
+    .check-sub { color: var(--text2); margin-top: 2px; font-size: 13px; }
+  </style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div class="nav-inner">
+    <a href="/" class="nav-back">‹ 首页</a>
+    <div class="nav-title">语文</div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="hero">
+    <div class="hero-icon">📖</div>
+    <h2>语文学习</h2>
+    <p>先把基础分拿回来，古诗词 + 字词先搞定</p>
+    <div class="hero-target">
+      <div class="hero-target-label">当前目标</div>
+      <div class="hero-target-scores">
+        <div class="score-box">
+          <div class="score-num">59</div>
+          <div class="score-label">现在</div>
+        </div>
+        <div class="score-arrow">→</div>
+        <div class="score-box score-target">
+          <div class="score-num">75</div>
+          <div class="score-label">班级平均</div>
+        </div>
+        <div style="margin-left:auto;font-size:13px;opacity:0.8">+16分</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 准备开始 -->
+  <div class="section-label">准备开始</div>
+  <div class="action-card">
+    <div class="action-title">Session 001 · 等待准备材料</div>
+    <div class="action-desc">语文摸底诊断</div>
+    <div class="action-sub">在正式练习前，需要先了解你这学期学了哪些古诗词，以及最近考试的扣分情况。</div>
+  </div>
+
+  <!-- 需要准备的东西 -->
+  <div class="section-label">妈妈帮我准备</div>
+  <div class="checklist">
+    <div class="check-item">
+      <div class="check-icon">📷</div>
+      <div class="check-text">
+        <div class="check-label">语文课本目录页</div>
+        <div class="check-sub">拍一张目录照片，让我知道这学期学了哪些课文</div>
+      </div>
+    </div>
+    <div class="check-item">
+      <div class="check-icon">📄</div>
+      <div class="check-text">
+        <div class="check-label">最近一次语文试卷</div>
+        <div class="check-sub">重点看扣分项，帮我知道哪里最薄弱</div>
+      </div>
+    </div>
+    <div class="check-item">
+      <div class="check-icon">📝</div>
+      <div class="check-text">
+        <div class="check-label">本学期要求背诵的古诗词</div>
+        <div class="check-sub">老师有没有规定必背篇目？列个清单就行</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 课程规划 -->
+  <div class="section-label">课程规划</div>
+  <div class="card-list">
+    <div class="phase-row">
+      <div class="phase-dot dot-urgent"></div>
+      <div class="phase-info">
+        <div class="phase-name">P0 · 基础记忆</div>
+        <div class="phase-sub">古诗词默写 ~6分 · 字词默写 ~4分</div>
+      </div>
+      <span class="phase-badge badge-urgent">最优先</span>
+    </div>
+    <div class="phase-row">
+      <div class="phase-dot dot-todo"></div>
+      <div class="phase-info">
+        <div class="phase-name">P1 · 阅读理解</div>
+        <div class="phase-sub">答题格式 · 关键词定位 · 归纳</div>
+      </div>
+      <span class="phase-badge badge-todo">第二阶段</span>
+    </div>
+    <div class="phase-row">
+      <div class="phase-dot dot-todo"></div>
+      <div class="phase-info">
+        <div class="phase-name">P2 · 写作基础</div>
+        <div class="phase-sub">记叙文结构 · 素材积累</div>
+      </div>
+      <span class="phase-badge badge-todo">第三阶段</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

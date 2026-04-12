@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>数学 · Chuck 学习</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --text2: #8e8e93;
+      --border: rgba(60,60,67,0.1);
+      --accent: #007aff;
+      --green: #34c759;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    .nav-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(242,242,247,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.33px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center;
+      height: 44px; padding: 0 16px;
+    }
+    .nav-back {
+      font-size: 17px; color: var(--accent);
+      text-decoration: none;
+    }
+    .nav-title {
+      font-size: 17px; font-weight: 600;
+      flex: 1; text-align: center;
+      margin-right: 40px;
+    }
+    .content { padding: 24px 16px 80px; max-width: 480px; margin: 0 auto; }
+
+    .hero {
+      background: linear-gradient(135deg, #34c759, #30d158);
+      border-radius: 16px;
+      padding: 32px 20px;
+      color: white;
+      margin-bottom: 28px;
+      text-align: center;
+      box-shadow: 0 4px 16px rgba(52,199,89,0.25);
+    }
+    .hero-icon { font-size: 48px; margin-bottom: 12px; }
+    .hero h2 { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+    .hero p { font-size: 15px; opacity: 0.85; line-height: 1.6; }
+
+    .coming-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      text-align: center;
+    }
+    .coming-icon { font-size: 32px; margin-bottom: 10px; }
+    .coming-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .coming-sub { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div class="nav-inner">
+    <a href="/" class="nav-back">‹ 首页</a>
+    <div class="nav-title">数学</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="hero">
+    <div class="hero-icon">📐</div>
+    <h2>数学</h2>
+    <p>摸底诊断后就启动<br>先把薄弱的地方找出来</p>
+  </div>
+
+  <div class="coming-card">
+    <div class="coming-icon">🔒</div>
+    <div class="coming-title">即将开始</div>
+    <div class="coming-sub">等英语和语文的基础打好之后，我们再来做数学的摸底。爸爸会安排的。</div>
+  </div>
+</div>
+
+</body>
+</html>

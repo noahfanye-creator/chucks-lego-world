@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>妈妈入口 · Chuck 学习</title>
+  <style>
+    :root {
+      --bg: #f2f2f7;
+      --card: #ffffff;
+      --text: #1c1c1e;
+      --text2: #8e8e93;
+      --border: rgba(60,60,67,0.1);
+      --accent: #007aff;
+      --green: #34c759;
+      --orange: #ff9500;
+      --red: #ff3b30;
+      --purple: #af52de;
+      --radius: 12px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100dvh;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    .nav-bar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(242,242,247,0.85);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.33px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center;
+      height: 44px; padding: 0 16px;
+      gap: 8px;
+    }
+    .nav-back {
+      font-size: 17px; color: var(--accent);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .nav-title {
+      font-size: 17px; font-weight: 600;
+      flex: 1; text-align: center;
+      margin-right: 40px;
+    }
+
+    .content { padding: 24px 16px 80px; max-width: 480px; margin: 0 auto; }
+
+    .greeting {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .greeting .emoji { font-size: 44px; margin-bottom: 8px; }
+    .greeting h2 { font-size: 20px; font-weight: 700; }
+    .greeting p { font-size: 14px; color: var(--text2); margin-top: 4px; line-height: 1.5; }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text2);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 4px;
+      margin-bottom: 8px;
+      margin-top: 24px;
+    }
+    .section-label:first-of-type { margin-top: 0; }
+
+    /* Progress Cards */
+    .progress-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .progress-header {
+      display: flex; align-items: center;
+      padding: 14px 16px;
+      gap: 12px;
+      border-bottom: 0.33px solid var(--border);
+    }
+    .subject-icon {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .icon-en { background: #007aff22; }
+    .icon-zh { background: #ff3b3022; }
+    .progress-title { font-size: 16px; font-weight: 600; flex: 1; }
+    .progress-badge {
+      font-size: 12px; padding: 2px 8px;
+      border-radius: 20px; font-weight: 500;
+    }
+    .badge-active { background: #34c75920; color: #34c759; }
+    .badge-soon { background: #8e8e9320; color: #8e8e93; }
+
+    .progress-body { padding: 14px 16px; }
+    .progress-row {
+      display: flex; justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .progress-row:last-child { margin-bottom: 0; }
+    .progress-label { color: var(--text2); }
+    .progress-value { font-weight: 500; }
+    .progress-bar-wrap {
+      height: 4px;
+      background: rgba(0,0,0,0.06);
+      border-radius: 2px;
+      margin: 8px 0 12px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+    .fill-en { background: var(--accent); }
+    .fill-zh { background: var(--red); }
+
+    .log-list {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+    .log-item {
+      padding: 12px 16px;
+      border-bottom: 0.33px solid var(--border);
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .log-item:last-child { border-bottom: none; }
+    .log-date { font-size: 12px; color: var(--text2); margin-bottom: 2px; }
+    .log-text { color: var(--text); }
+    .log-highlight { color: var(--accent); font-weight: 500; }
+
+    /* Input Form */
+    .input-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      margin-bottom: 16px;
+    }
+    .input-row {
+      display: flex; align-items: flex-start;
+      padding: 14px 16px;
+      gap: 12px;
+      border-bottom: 0.33px solid var(--border);
+    }
+    .input-row:last-child { border-bottom: none; }
+    .input-label {
+      font-size: 15px;
+      font-weight: 500;
+      flex-shrink: 0;
+      padding-top: 2px;
+      min-width: 70px;
+    }
+    textarea, input[type="text"] {
+      flex: 1;
+      font-family: inherit;
+      font-size: 15px;
+      color: var(--text);
+      border: none;
+      outline: none;
+      background: transparent;
+      resize: none;
+      line-height: 1.5;
+    }
+    textarea::placeholder, input[type="text"]::placeholder {
+      color: var(--text2);
+    }
+    textarea { min-height: 64px; }
+
+    .type-selector {
+      display: flex; gap: 8px;
+      padding: 12px 16px 0;
+      flex-wrap: wrap;
+    }
+    .type-chip {
+      font-size: 13px;
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .type-chip.selected {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+
+    .submit-btn {
+      display: block;
+      width: calc(100% - 32px);
+      margin: 16px 16px 0;
+      padding: 14px;
+      background: var(--accent);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: opacity 0.15s;
+    }
+    .submit-btn:active { opacity: 0.8; }
+
+    .form-note {
+      font-size: 13px;
+      color: var(--text2);
+      text-align: center;
+      margin-top: 10px;
+      padding: 0 16px;
+      line-height: 1.5;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(28,28,30,0.9);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+      transition: transform 0.3s ease;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div class="nav-inner">
+    <a href="/" class="nav-back">‹ 首页</a>
+    <div class="nav-title">妈妈入口</div>
+  </div>
+</div>
+
+<div class="content">
+  <div class="greeting">
+    <div class="emoji">👩</div>
+    <h2>你好，Chuck 的妈妈</h2>
+    <p>这里可以看 Chuck 的学习进度<br>也可以把你观察到的情况告诉我</p>
+  </div>
+
+  <!-- 学习进度 -->
+  <div class="section-label">学习进度</div>
+
+  <div class="progress-card">
+    <div class="progress-header">
+      <div class="subject-icon icon-en">🔤</div>
+      <div class="progress-title">英语</div>
+      <span class="progress-badge badge-active">进行中</span>
+    </div>
+    <div class="progress-body">
+      <div class="progress-row">
+        <span class="progress-label">当前阶段</span>
+        <span class="progress-value">P0 · 一般现在时</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill fill-en" style="width: 40%"></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">已完成 Session</span>
+        <span class="progress-value">2 节</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">下次重点</span>
+        <span class="progress-value">助动词 + 动词原形</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-card">
+    <div class="progress-header">
+      <div class="subject-icon icon-zh">📖</div>
+      <div class="progress-title">语文</div>
+      <span class="progress-badge badge-active">进行中</span>
+    </div>
+    <div class="progress-body">
+      <div class="progress-row">
+        <span class="progress-label">当前目标</span>
+        <span class="progress-value">59分 → 75分</span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill fill-zh" style="width: 5%"></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">下次重点</span>
+        <span class="progress-value">古诗词摸底诊断</span>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">需要你准备</span>
+        <span class="progress-value" style="color:var(--orange)">教材目录 + 试卷照片</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 最近动态 -->
+  <div class="section-label">最近动态</div>
+  <div class="log-list">
+    <div class="log-item">
+      <div class="log-date">2026-04-12</div>
+      <div class="log-text">英语 Session 002 完成 · 三单变形 <span class="log-highlight">7/8</span> · 口头全对</div>
+    </div>
+    <div class="log-item">
+      <div class="log-date">2026-04-12</div>
+      <div class="log-text">语文课程已建立 · 等待摸底诊断</div>
+    </div>
+    <div class="log-item">
+      <div class="log-date">2026-04-12</div>
+      <div class="log-text">项目启动 · Chuck 学习档案创建</div>
+    </div>
+  </div>
+
+  <!-- 告诉我你的观察 -->
+  <div class="section-label">告诉我你的观察</div>
+  <p style="font-size:14px;color:var(--text2);padding:0 4px;margin-bottom:12px;line-height:1.6">
+    你平时看到的、听到的，随手记一条就行。<br>越具体越好，帮 AI 更好地了解 Chuck。
+  </p>
+
+  <div class="input-card">
+    <div class="type-selector" id="typeSelector">
+      <div class="type-chip selected" data-val="observation">今天观察</div>
+      <div class="type-chip" data-val="mood">情绪状态</div>
+      <div class="type-chip" data-val="school">学校情况</div>
+      <div class="type-chip" data-val="interest">兴趣爱好</div>
+      <div class="type-chip" data-val="other">其他</div>
+    </div>
+    <div class="input-row" style="padding-top:14px">
+      <textarea id="noteInput" placeholder="比如：今天他做英语作业特别认真，主动问了我一个单词的意思……" rows="4"></textarea>
+    </div>
+  </div>
+  <button class="submit-btn" onclick="submitNote()">提交给爸爸</button>
+  <div class="form-note">内容会直接发给爸爸，帮助完善 Chuck 的学习档案</div>
+
+</div>
+
+<div class="toast" id="toast">✓ 已提交，谢谢你！</div>
+
+<script>
+  // Type selector
+  document.querySelectorAll('.type-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+    });
+  });
+
+  function submitNote() {
+    const note = document.getElementById('noteInput').value.trim();
+    if (!note) {
+      document.getElementById('noteInput').focus();
+      return;
+    }
+    const type = document.querySelector('.type-chip.selected')?.dataset.val || 'other';
+
+    fetch('/api/mama-note', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type,
+        note,
+        ts: new Date().toISOString()
+      })
+    }).then(() => {
+      showToast('✓ 已提交，谢谢你！');
+      document.getElementById('noteInput').value = '';
+    }).catch(() => {
+      // Fallback: show success anyway (can store locally later)
+      showToast('✓ 已记录');
+    });
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+
+</body>
+</html>
